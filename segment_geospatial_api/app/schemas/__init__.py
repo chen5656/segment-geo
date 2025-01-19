@@ -1,2 +1,2 @@
 from .health import Health
-from .predict import MultipleCarTransactionInputData, PredictionResults
+from .predict import PredictionRequest, PredictionResults

@@ -1,6 +1,5 @@
-from typing import Any, List, Optional
+from typing import Any, List, Tuple, Optional
 
-from car_evaluation_model.processing import validation as v
 from pydantic import BaseModel
 
 
@@ -10,22 +9,7 @@ class PredictionResults(BaseModel):
     predictions: Optional[List[int]]
 
 
-class MultipleCarTransactionInputData(BaseModel):
-    inputs: List[v.CarTransactionInputData]
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "inputs": [
-                    {
-                        "buying": "vhigh",
-                        "maint": "med",
-                        "doors": 4, 
-                        "persons": "more",
-                        "lug_boot": "med",
-                        "safety": "high"
-                    }
-                ]
-            }
-        }
-        
+class PredictionRequest(BaseModel):
+    bounding_box: Tuple[float, float, float, float]
+    text_prompt: str
+    zoom_level: int = 20
