@@ -1,4 +1,11 @@
 
+These instructions assume that you already have Docker and Docker-compose installed on your machine - if not, please follow the instructions here.
+
+Clone this repository to your computer
+Navigate to the root of the project: cd car-evaluation-project
+Build the docker images using docker-compose up -d --build
+This may take a minute
+Open your browser and navigate to http://localhost:8501 to use the application.
 
 # Citations
 

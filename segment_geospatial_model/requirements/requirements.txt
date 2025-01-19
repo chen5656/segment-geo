@@ -1,5 +1,0 @@
-# ML requirements
-gdal
-samgeo
-leafmap
-groundingdino-py

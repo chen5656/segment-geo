@@ -1,8 +1,6 @@
 import json
 
 from fastapi import FastAPI, APIRouter, HTTPException
-from pydantic import BaseModel
-from typing import List
 from .predict import predictor
 from loguru import logger
 

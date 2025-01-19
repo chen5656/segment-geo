@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+  api:
+    build: 
+      context: .
+      dockerfile: segment_geospatial_api/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./segment_geospatial_api:/app
+      - ./segment_geospatial_model:/app/segment_geospatial_model
+    command: uvicorn app.api:app --host 0.0.0.0 --port 8000 --reload
+
+  streamlit:
+    build:
+      context: .
+      dockerfile: segment_geospatial_streamlit/Dockerfile
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./segment_geospatial_streamlit:/app
+      - ./segment_geospatial_model:/app/segment_geospatial_model
+    depends_on:
+      - api
+    environment:
+      - API_URL=http://api:8000 

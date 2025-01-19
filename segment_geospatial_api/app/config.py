@@ -26,7 +26,7 @@ class Settings(BaseSettings):
         "https://localhost:8000",
     ]
 
-    PROJECT_NAME: str = "Car Evaluation API"
+    PROJECT_NAME: str = "Segment Geospatial API"
 
     class Config:
         case_sensitive = True
