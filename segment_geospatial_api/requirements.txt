@@ -1,6 +1,6 @@
 # ML requirements
-gdal
-samgeo
+gdal==3.6.2  # Match the system GDAL version
+segment-geospatial  # This is the correct package name for samgeo
 groundingdino-py
 
 # API dependencies
