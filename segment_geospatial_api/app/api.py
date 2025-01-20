@@ -1,9 +1,7 @@
 import json
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from typing import List
-from .predict import predictor
+from segment_geospatial_model.predictor import predictor
 from loguru import logger
 
 from app import __version__, schemas

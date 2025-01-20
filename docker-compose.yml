@@ -2,33 +2,27 @@ version: '3'
 
 services:
   api:
-    image: python:3.11-slim
+    image: continuumio/miniconda3
     ports:
       - "8000:8000"
     volumes:
       - ./segment_geospatial_api:/app
-      - ./segment_geospatial_model:/app/segment_geospatial_model
     working_dir: /app
+    environment:
+      - MODEL_PATH=/app/models
     command: >
-      bash -c "apt-get update && 
-      apt-get install -y gdal-bin libgdal-dev gcc g++ python3-dev git &&
-      pip install -r requirements.txt &&
-      uvicorn app.api:app --host 0.0.0.0 --port 8000 --reload"
+      bash -c "conda env create -f environment.yml &&
+      conda run -n geo_env uvicorn main:app --host 0.0.0.0 --port 8000"
 
   streamlit:
-    image: python:3.11-slim
+    image: continuumio/miniconda3
     ports:
       - "8501:8501"
     volumes:
       - ./segment_geospatial_streamlit:/app
-      - ./segment_geospatial_model:/app/segment_geospatial_model
     working_dir: /app
-    depends_on:
-      - api
     environment:
       - API_URL=http://api:8000
     command: >
-      bash -c "apt-get update && 
-      apt-get install -y gdal-bin libgdal-dev gcc g++ python3-dev git &&
-      pip install -r requirements.txt &&
-      streamlit run app.py --server.port 8501 --server.address 0.0.0.0" 
+      bash -c "conda env create -f environment.yml &&
+      conda run -n geo_env streamlit run app.py --server.port 8501 --server.address 0.0.0.0" 

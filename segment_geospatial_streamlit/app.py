@@ -8,12 +8,16 @@ from streamlit import components
 # Page config
 st.set_page_config(layout="wide")
 
+# Initialize session state
+if 'bbox' not in st.session_state:
+    st.session_state.bbox = None
+
 # Title and description
 st.title("Geospatial Object Detection")
 st.write("Draw a box on the map and enter what you want to detect.")
 
 # Create two columns - left for inputs, right for map
-col1, col2 = st.columns([1, 3])
+col1, col2 = st.columns([1, 4])  # Changed ratio to make map larger
 
 with col1:
     # Input panel
@@ -22,33 +26,32 @@ with col1:
     # Text input for object to detect
     text_prompt = st.text_input(
         "What do you want to detect?",
-        placeholder="e.g., trees, telephone poles",
-        help="Enter a single type of object to detect"
+        placeholder="e.g., poles, trees, buildings"
     )
     
-    # Zoom level slider
-    zoom_level = st.slider(
+    # Zoom level dropdown
+    zoom_level = st.selectbox(
         "Zoom Level",
-        min_value=15,
-        max_value=22,
-        value=20,
+        options=[15, 16, 17, 18, 19, 20, 21, 22],
+        index=3,  # Default to 18
         help="Higher zoom level means more detail"
     )
     
-    # Initialize session state for bounding box and button
-    if 'bbox' not in st.session_state:
-        st.session_state.bbox = None
-    
-    # Create detect button
+    # Detect button - only enabled if bbox is selected
     detect_button = st.button(
         "Detect Objects",
-        disabled=not (st.session_state.bbox and text_prompt),
-        help="Draw a box on the map first"
+        # disabled=not st.session_state.bbox,
+        help="First draw a rectangle on the map"
     )
 
 with col2:
     # Initialize map centered on a default location
-    m = folium.Map(location=[32.77058258620389, -96.79199913948932], zoom_start=18)
+    m = folium.Map(
+        location=[32.77058258620389, -96.79199913948932],
+        zoom_start=zoom_level,
+        width='100%',
+        height='800px'  # Increased height for better visibility
+    )
     
     # Add satellite tile layer
     folium.TileLayer(
@@ -71,70 +74,66 @@ with col2:
     )
     draw.add_to(m)
     
-    # Display map
-    map_data = folium_static(m, width=800)
+    # Display map with full width
+    map_data = folium_static(m, width=None, height=800)
     
     # Get bbox from drawn rectangle using JavaScript
-    components.html(
+    components.v1.html(
         """
         <script>
-        const map = document.querySelector("#map");
-        map.addEventListener('draw:created', function(e) {
-            const bounds = e.layer.getBounds();
-            const bbox = [
-                bounds.getWest(),
-                bounds.getSouth(),
-                bounds.getEast(),
-                bounds.getNorth()
-            ];
-            window.parent.postMessage({type: 'bbox', value: bbox}, '*');
+        // Wait for the map to be loaded
+        window.addEventListener('load', function() {
+            // Find the map element
+            const maps = document.getElementsByClassName('folium-map');
+            if (maps.length > 0) {
+                const map = maps[0];
+                
+                // Add draw created event listener
+                map.addEventListener('draw:created', function(e) {
+                    const layer = e.layer;
+                    const bounds = layer.getBounds();
+                    const bbox = [
+                        bounds.getWest(),
+                        bounds.getSouth(),
+                        bounds.getEast(),
+                        bounds.getNorth()
+                    ];
+                    // Send bbox to Streamlit
+                    window.parent.postMessage({
+                        type: 'streamlit:set_session_state',
+                        data: { bbox: bbox }
+                    }, '*');
+                });
+            }
         });
         </script>
         """,
         height=0,
     )
 
-# Handle bbox updates from JavaScript
-if st.session_state.bbox:
-    st.write("Selected area:", st.session_state.bbox)
-
 # Handle detection
-if detect_button:
+if detect_button and st.session_state.bbox and text_prompt:
     with st.spinner('Detecting objects...'):
         try:
             # Prepare request data
             data = {
-                "bounding_box": st.session_state.bbox,
+                "bbox": st.session_state.bbox,
                 "text_prompt": text_prompt,
-                "zoom_level": zoom_level
+                "zoom_level": zoom_level  # Added zoom level to the request
             }
             
             # Make API request
             response = requests.post(
-                "http://localhost:8000/predict",
+                f"{st.secrets.get('API_URL', 'http://api:8000')}/predict",
                 json=data
             )
             
             if response.status_code == 200:
-                geojson_data = response.json()["geojson"]
+                # Get GeoJSON result
+                geojson_data = response.json()
                 
-                # Add GeoJSON to map
-                folium.GeoJson(
-                    geojson_data,
-                    name='Detected Objects',
-                    style_function=lambda x: {
-                        'fillColor': '#00ff00',
-                        'color': '#00ff00',
-                        'weight': 2,
-                        'fillOpacity': 0.3
-                    }
-                ).add_to(m)
-                
-                # Add layer control
-                folium.LayerControl().add_to(m)
-                
-                # Update map
-                folium_static(m, width=800)
+                # Display results
+                st.success(f"Detection complete! Found objects matching '{text_prompt}'")
                 
                 # Add download button for GeoJSON
                 st.download_button(
@@ -155,7 +154,7 @@ st.markdown("""
 ### How to use:
 1. Draw a rectangle on the map to select an area
 2. Enter what you want to detect in the text input
-3. Adjust zoom level if needed
+3. Select zoom level for detection
 4. Click 'Detect Objects' button
 5. Download results as GeoJSON if needed
 """)
