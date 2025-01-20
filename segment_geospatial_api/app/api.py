@@ -1,7 +1,8 @@
 import json
+from typing import Union
 
 from fastapi import APIRouter, HTTPException
-from segment_geospatial_model.predictor import predictor
+from app.segment_geospatial.predict import predictor
 from loguru import logger
 
 from app import __version__, schemas
@@ -22,18 +23,24 @@ def health() -> dict:
 
     return health.dict()
 
-@api_router.post("/predict", response_model=schemas.PredictionResults, status_code=200)
+@api_router.post("/predict", 
+                response_model=Union[schemas.PredictionResults, schemas.ErrorResponse], 
+                status_code=200)
 async def predict(request: schemas.PredictionRequest):
-    result = await predictor.make_prediction(
-        bounding_box=request.bounding_box,
-        text_prompt=request.text_prompt,
-        zoom_level=request.zoom_level
-    )
+    try:
+        result = await predictor.make_prediction(
+            bounding_box=request.bounding_box,
+            text_prompt=request.text_prompt,
+            zoom_level=request.zoom_level
+        )
 
-    if result["errors"] is not None:
-        logger.warning(f"Prediction validation error: {result.get('errors')}")
-        raise HTTPException(status_code=400, detail=json.loads(result["errors"]))
+        if result.get("errors") is not None:
+            logger.warning(f"Prediction validation error: {result.get('errors')}")
+            return schemas.ErrorResponse(error=str(result["errors"]))
 
-    logger.info(f"Prediction results: {result.get('predictions')}")
+        logger.info(f"Prediction results: {result.get('predictions')}")
+        return result
 
-    return result 
+    except Exception as e:
+        logger.error(f"Error during prediction: {str(e)}")
+        return schemas.ErrorResponse(error=str(e)) 
