@@ -24,10 +24,13 @@ async def call_predict(request: PredictionRequest):
         raise
 
 if __name__ == "__main__":
+    # [min_longitude, min_latitude, max_longitude, max_latitude]
+    # [left, bottom, right, top]
     request = PredictionRequest(
-        bounding_box=[-122.4194, 37.7749, -122.4094, 37.7849],
+        # Using a smaller bounding box in Dallas area
+        bounding_box=[-96.81040, 32.97140, -96.81000, 32.97180],
         text_prompt="trees",
-        zoom_level=20
+        zoom_level=19  # Reduced zoom level for better performance
     )
     
     # Run the async function
