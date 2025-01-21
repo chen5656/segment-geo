@@ -32,7 +32,7 @@ with col1:
     # Zoom level dropdown
     zoom_level = st.selectbox(
         "Zoom Level",
-        options=[15, 16, 17, 18, 19, 20, 21, 22],
+        options=[15, 16, 17, 18, 19],
         index=3,  # Default to 18
         help="Higher zoom level means more detail"
     )

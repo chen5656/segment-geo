@@ -1,0 +1,20 @@
+.App {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.App-header {
+  background-color: #282c34;
+  padding: 20px;
+  color: white;
+}
+
+.map-container {
+  padding: 20px;
+}
+
+.leaflet-container {
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+} 
