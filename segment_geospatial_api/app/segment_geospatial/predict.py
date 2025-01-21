@@ -36,21 +36,22 @@ class SegmentationPredictor:
     def sam(self):
         return self._sam
 
-    def count_tiles(self, bounding_box, zoom_level):
+    @staticmethod
+    def count_tiles(bounding_box, zoom_level):
         """Count the number of tiles needed for the given bounding box and zoom level."""
         west, south, east, north = bounding_box
-        
+
         def deg2num(lat, lon, zoom):
             lat_r = math.radians(lat)
             n = 2**zoom
             xtile = (lon + 180) / 360 * n
             ytile = (1 - math.log(math.tan(lat_r) + 1 / math.cos(lat_r)) / math.pi) / 2 * n
-            return (xtile, ytile)
-        
+            return xtile, ytile
+
         # Convert bounding box coordinates to tile coordinates
         x0, y0 = deg2num(south, west, zoom_level)
         x1, y1 = deg2num(north, east, zoom_level)
-        
+
         x0, x1 = sorted([x0, x1])
         y0, y1 = sorted([y0, y1])
         corners = tuple(
@@ -59,8 +60,8 @@ class SegmentationPredictor:
                 range(math.floor(y0), math.ceil(y1)),
             )
         )
-        totalnum = len(corners)
-        return totalnum
+        total_num = len(corners)
+        return total_num
 
     async def make_prediction(self, *, bounding_box: list, text_prompt: str, zoom_level: int = 20) -> Dict[str, Any]:
         """Make a prediction using SAM."""
