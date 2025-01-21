@@ -35,8 +35,8 @@ class PredictionRequest(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "bounding_box": [-122.4194, 37.7749, -122.4094, 37.7849],
+                "bounding_box": [-96.81040, 32.97140, -96.81000, 32.97180],
                 "text_prompt": "trees",
-                "zoom_level": 20
+                "zoom_level": 19
             }
         }
