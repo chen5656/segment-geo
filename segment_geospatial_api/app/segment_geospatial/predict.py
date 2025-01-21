@@ -1,4 +1,4 @@
-from samgeo import tms_to_geotiff
+from samgeo import tms_to_geotiff, raster_to_geojson
 from samgeo.text_sam import LangSAM
 import uuid
 import json
@@ -28,7 +28,8 @@ logger.add(sys.stderr, level="INFO")
 class SegmentationPredictor:
     def __init__(self):
         logger.info("Initializing LangSAM model...")
-        self._sam = LangSAM()
+        # Segmenting remote sensing imagery with text prompts and the Segment Anything Model 2 (SAM 2)
+        self._sam = LangSAM(model_type="sam2-hiera-large")
         logger.success("LangSAM model initialized successfully")
 
     @property
@@ -150,7 +151,7 @@ class SegmentationPredictor:
             # Convert to GeoJSON
             logger.info("Converting to GeoJSON...")
             try:
-                self.sam.tiff_to_geojson(
+                raster_to_geojson(
                     output_image,
                     output_geojson,
                     None      # simplify_tolerance

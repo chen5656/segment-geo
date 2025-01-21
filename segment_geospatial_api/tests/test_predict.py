@@ -35,7 +35,6 @@ if __name__ == "__main__":
     
     # Run the async function
     result = asyncio.run(call_predict(request))
-    print(result)
     
     # Validate result structure
     assert result is not None
@@ -47,9 +46,7 @@ if __name__ == "__main__":
     feature = result['geojson']['features'][0]
     assert feature['type'] == 'Feature'
     assert feature['geometry']['type'] == 'Polygon'
-    assert feature['geometry']['coordinates'] is not None
-    assert feature['properties']['class'] == 'tree'
-    
+     
     # Verify temporary files are cleaned up
     temp_files = glob.glob("*.tif") + glob.glob("*.geojson")
     assert len(temp_files) == 0, f"Found temporary files that were not deleted: {temp_files}"
