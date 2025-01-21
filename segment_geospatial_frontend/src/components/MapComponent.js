@@ -8,6 +8,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import './MapComponent.css';
 import axios from 'axios';
+import DownloadIcon from '@mui/icons-material/Download';
 const { BaseLayer } = LayersControl;
 
 // TabPanel component for MUI tabs
@@ -29,33 +30,49 @@ function TabPanel(props) {
 }
 
 // Create a component to handle map interactions
-function MapController({ geoJsonData, setGeoJsonLayer }) {
+function MapController({ geoJsonData, setGeoJsonLayer, pointPosition }) {
   const map = useMap();
   
   useEffect(() => {
     if (geoJsonData) {
-      // Remove existing layer if it exists
       if (setGeoJsonLayer.current) {
         setGeoJsonLayer.current.remove();
       }
 
-      // Create new layer
-      const layer = L.geoJSON(geoJsonData, {
-        style: {
-          color: '#ff0000',
-          weight: 2,
-          opacity: 0.8,
-          fillOpacity: 0.4
+      const points = geoJsonData.features.map(feature => {
+        const bounds = L.geoJSON(feature).getBounds();
+        // Get coordinates based on selected position
+        let point;
+        switch (pointPosition) {
+          case 'top-right':
+            point = [bounds.getNorth(), bounds.getEast()];
+            break;
+          case 'top-left':
+            point = [bounds.getNorth(), bounds.getWest()];
+            break;
+          case 'bottom-left':
+            point = [bounds.getSouth(), bounds.getWest()];
+            break;
+          case 'bottom-right':
+          default:
+            point = [bounds.getSouth(), bounds.getEast()];
+            break;
         }
-      }).addTo(map);
+        
+        return L.circleMarker(point, {
+          radius: 5,
+          color: '#ff0000',
+          fillColor: '#ff0000',
+          fillOpacity: 1,
+          weight: 1
+        });
+      });
 
-      // Store reference to layer
+      const layer = L.featureGroup(points).addTo(map);
       setGeoJsonLayer.current = layer;
-
-      // Fit map bounds to the new layer
       map.fitBounds(layer.getBounds());
     }
-  }, [geoJsonData, map]);
+  }, [geoJsonData, map, pointPosition]);
 
   return null;
 }
@@ -157,6 +174,7 @@ const MapComponent = () => {
   const [geoJsonData, setGeoJsonData] = useState(null);
   const featureGroupRef = useRef();
   const geoJsonLayerRef = useRef(null);
+  const [pointPosition, setPointPosition] = useState('bottom-right');
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -222,6 +240,21 @@ const MapComponent = () => {
     }
   };
 
+  const handleDownloadGeoJson = () => {
+    if (geoJsonData) {
+      const dataStr = JSON.stringify(geoJsonData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'detection_results.geojson';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+  };
+
   return (
     <div className="map-layout"> 
     
@@ -239,6 +272,20 @@ const MapComponent = () => {
         <div className="tab-panels">
           <TabPanel value={tabValue} index={0}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+
+              <TextField
+                select
+                label="Point Position"
+                value={pointPosition}
+                onChange={(e) => setPointPosition(e.target.value)}
+                size="small"
+                fullWidth
+              >
+                <option value="top-right">Top Right</option>
+                <option value="top-left">Top Left</option>
+                <option value="bottom-right">Bottom Right</option>
+                <option value="bottom-left">Bottom Left</option>
+              </TextField>
               <TextField
                 label="What do you want to detect?"
                 placeholder="e.g., poles, trees, buildings"
@@ -281,13 +328,35 @@ const MapComponent = () => {
 
           <TabPanel value={tabValue} index={1}>
             {geoJsonData ? (
-              <Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Typography variant="body2" gutterBottom>
                   Detection results displayed on map
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   {geoJsonData.features?.length || 0} objects found
                 </Typography>
+                <TextField
+                  select
+                  label="Point Position"
+                  value={pointPosition}
+                  onChange={(e) => setPointPosition(e.target.value)}
+                  size="small"
+                  fullWidth
+                >
+                  <option value="top-right">Top Right</option>
+                  <option value="top-left">Top Left</option>
+                  <option value="bottom-right">Bottom Right</option>
+                  <option value="bottom-left">Bottom Left</option>
+                </TextField>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleDownloadGeoJson}
+                  startIcon={<DownloadIcon />}
+                  fullWidth
+                >
+                  Download GeoJSON
+                </Button>
               </Box>
             ) : (
               <Typography variant="body2">No detection results yet</Typography>
@@ -352,7 +421,11 @@ const MapComponent = () => {
               }}
             />
           </FeatureGroup>
-          <MapController geoJsonData={geoJsonData} setGeoJsonLayer={geoJsonLayerRef} />
+          <MapController 
+            geoJsonData={geoJsonData} 
+            setGeoJsonLayer={geoJsonLayerRef}
+            pointPosition={pointPosition}
+          />
           <SearchControl />
         </MapContainer>
       </div>
