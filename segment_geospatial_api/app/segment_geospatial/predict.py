@@ -1,6 +1,5 @@
 from samgeo import tms_to_geotiff, raster_to_geojson
 from samgeo.text_sam import LangSAM
-import leafmap
 import uuid
 import json
 import math
@@ -32,11 +31,10 @@ class SegmentationPredictor:
         logger.info("Initializing LangSAM model...")
         # Segmenting remote sensing imagery with text prompts and the Segment Anything Model 2 (SAM 2)
         # self._sam = LangSAM(model_type="sam2-hiera-large")
-        self._sam = LangSAM( )
+        self._sam = LangSAM()
         logger.success("LangSAM model initialized successfully")
         # Create coordinate transformer
         self.transformer = Transformer.from_crs("EPSG:3857", "EPSG:4326", always_xy=True)
-        self.map = leafmap.Map(add_google_map=False)
 
     @property
     def sam(self):
@@ -104,15 +102,6 @@ class SegmentationPredictor:
         }
         return geojson_data
 
-    def download_satellite_imagery(self, output_path: str, bbox: list, zoom: int):
-        """Download satellite imagery using leafmap."""
-        west, south, east, north = bbox
-        self.map.center = [(north + south) / 2, (east + west) / 2]
-        self.map.zoom = zoom
-        self.map.add_basemap("SATELLITE")
-        self.map.download_tile_layer(output_path, bbox, zoom)
-        return output_path
-
     async def make_prediction(self, *, bounding_box: list, text_prompt: str, zoom_level: int = 20) -> Dict[str, Any]:
         """Make a prediction using SAM."""
         logger.info(f"Starting prediction for text_prompt='{text_prompt}', bbox={bounding_box}, zoom={zoom_level}")
@@ -146,21 +135,17 @@ class SegmentationPredictor:
         output_geojson = f"segment_{request_id}.geojson"
         
         try:
-            # Download satellite imagery using leafmap
+            # Download satellite imagery
             logger.info("Downloading satellite imagery...")
             try:
-                async with asyncio.timeout(300):  # 5 minute timeout
-                    await asyncio.get_event_loop().run_in_executor(
-                        None,
-                        self.download_satellite_imagery,
-                        input_image,
-                        bounding_box,
-                        zoom_level
-                    )
+                tms_to_geotiff(
+                    input_image,
+                    bounding_box,
+                    zoom_level,
+                    source="Satellite",
+                    overwrite=True
+                )
                 logger.success("Satellite imagery downloaded successfully")
-            except asyncio.TimeoutError:
-                logger.error("Satellite imagery download timed out after 5 minutes")
-                return {"error": "Download timed out. Please try a smaller area or lower zoom level."}
             except Exception as e:
                 logger.error(f"Failed to download satellite imagery: {str(e)}", exc_info=True)
                 return {"error": f"Failed to download satellite imagery: {str(e)}"}
@@ -168,6 +153,7 @@ class SegmentationPredictor:
             # Run prediction
             logger.info("Running SAM prediction...")
             try:
+                # Run synchronous predict method in thread pool
                 await asyncio.get_event_loop().run_in_executor(
                     None,
                     self.sam.predict,
