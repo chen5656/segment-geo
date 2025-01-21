@@ -21,10 +21,8 @@ class Settings(BaseSettings):
     # BACKEND_CORS_ORIGINS is a comma-separated list of origins
     # e.g: http://localhost,http://localhost:4200,http://localhost:3000
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = [
-        "http://localhost:3000",
-        "http://localhost:8000",
-        "https://localhost:3000",
-        "https://localhost:8000",
+        "http://localhost:3000",  # React development server
+        "http://localhost:8080",  # Alternative local development URL
     ]
 
     PROJECT_NAME: str = "Segment Geospatial API"

@@ -2,15 +2,14 @@ import json
 from typing import Union
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 from app.segment_geospatial.predict import predictor
 from loguru import logger
 
 from app import __version__, schemas
 from app.config import settings
 
-
 api_router = APIRouter()
-
 
 @api_router.get("/health", response_model=schemas.Health, status_code=200)
 def health() -> dict:
@@ -20,7 +19,6 @@ def health() -> dict:
     health = schemas.Health(
         name=settings.PROJECT_NAME, api_version=__version__
     )
-
     return health.dict()
 
 @api_router.post("/predict", 
@@ -36,11 +34,17 @@ async def predict(request: schemas.PredictionRequest):
 
         if result.get("errors") is not None:
             logger.warning(f"Prediction validation error: {result.get('errors')}")
-            return schemas.ErrorResponse(error=str(result["errors"]))
+            return JSONResponse(
+                status_code=400,
+                content={"error": str(result["errors"])}
+            )
 
         logger.info(f"Prediction results: {result.get('predictions')}")
-        return result
+        return result  # FastAPI will automatically convert this to JSONResponse
 
     except Exception as e:
         logger.error(f"Error during prediction: {str(e)}")
-        return schemas.ErrorResponse(error=str(e)) 
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)}
+        ) 

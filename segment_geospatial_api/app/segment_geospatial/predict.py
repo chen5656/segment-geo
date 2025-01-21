@@ -1,5 +1,6 @@
 from samgeo import tms_to_geotiff, raster_to_geojson
 from samgeo.text_sam import LangSAM
+import leafmap
 import uuid
 import json
 import math
@@ -9,6 +10,7 @@ import sys
 import asyncio
 import itertools
 import os
+from pyproj import Transformer
 
 # Configure loguru logger
 logger.remove()  # Remove default handler
@@ -29,8 +31,12 @@ class SegmentationPredictor:
     def __init__(self):
         logger.info("Initializing LangSAM model...")
         # Segmenting remote sensing imagery with text prompts and the Segment Anything Model 2 (SAM 2)
-        self._sam = LangSAM(model_type="sam2-hiera-large")
+        # self._sam = LangSAM(model_type="sam2-hiera-large")
+        self._sam = LangSAM( )
         logger.success("LangSAM model initialized successfully")
+        # Create coordinate transformer
+        self.transformer = Transformer.from_crs("EPSG:3857", "EPSG:4326", always_xy=True)
+        self.map = leafmap.Map(add_google_map=False)
 
     @property
     def sam(self):
@@ -62,6 +68,50 @@ class SegmentationPredictor:
         )
         total_num = len(corners)
         return total_num
+
+    def transform_coordinates(self, geojson_data):
+        """Transform coordinates from EPSG:3857 to EPSG:4326"""
+        if not geojson_data or 'features' not in geojson_data:
+            return geojson_data
+
+        for feature in geojson_data['features']:
+            if 'geometry' not in feature:
+                continue
+
+            geometry = feature['geometry']
+            if geometry['type'] == 'Polygon':
+                for i, ring in enumerate(geometry['coordinates']):
+                    transformed_coords = []
+                    for x, y in ring:
+                        lon, lat = self.transformer.transform(x, y)
+                        transformed_coords.append([lon, lat])
+                    geometry['coordinates'][i] = transformed_coords
+            elif geometry['type'] == 'MultiPolygon':
+                for i, polygon in enumerate(geometry['coordinates']):
+                    for j, ring in enumerate(polygon):
+                        transformed_coords = []
+                        for x, y in ring:
+                            lon, lat = self.transformer.transform(x, y)
+                            transformed_coords.append([lon, lat])
+                        geometry['coordinates'][i][j] = transformed_coords
+
+        # Update CRS to WGS84
+        geojson_data['crs'] = {
+            "type": "name",
+            "properties": {
+                "name": "urn:ogc:def:crs:EPSG::4326"
+            }
+        }
+        return geojson_data
+
+    def download_satellite_imagery(self, output_path: str, bbox: list, zoom: int):
+        """Download satellite imagery using leafmap."""
+        west, south, east, north = bbox
+        self.map.center = [(north + south) / 2, (east + west) / 2]
+        self.map.zoom = zoom
+        self.map.add_basemap("SATELLITE")
+        self.map.download_tile_layer(output_path, bbox, zoom)
+        return output_path
 
     async def make_prediction(self, *, bounding_box: list, text_prompt: str, zoom_level: int = 20) -> Dict[str, Any]:
         """Make a prediction using SAM."""
@@ -96,14 +146,13 @@ class SegmentationPredictor:
         output_geojson = f"segment_{request_id}.geojson"
         
         try:
-            # Download satellite imagery
+            # Download satellite imagery using leafmap
             logger.info("Downloading satellite imagery...")
             try:
                 async with asyncio.timeout(300):  # 5 minute timeout
-                    # Run the synchronous function in a thread pool
                     await asyncio.get_event_loop().run_in_executor(
                         None,
-                        tms_to_geotiff,
+                        self.download_satellite_imagery,
                         input_image,
                         bounding_box,
                         zoom_level
@@ -119,7 +168,6 @@ class SegmentationPredictor:
             # Run prediction
             logger.info("Running SAM prediction...")
             try:
-                # Run synchronous predict method in thread pool
                 await asyncio.get_event_loop().run_in_executor(
                     None,
                     self.sam.predict,
@@ -172,17 +220,21 @@ class SegmentationPredictor:
                     logger.warning(f"No {text_prompt} found in the specified area")
                     return {"error": f"No {text_prompt} found in the specified area"}
                 
-                logger.success(f"Successfully found {len(geojson_content.get('features', []))} features")
+                # Transform coordinates to lat/long
+                logger.info("Transforming coordinates to WGS84...")
+                transformed_geojson = self.transform_coordinates(geojson_content)
+                
+                logger.success(f"Successfully found {len(transformed_geojson.get('features', []))} features")
                 return {
                     "errors": None,
                     "version": "1.0",
                     "predictions": None,
-                    "geojson": geojson_content
+                    "geojson": transformed_geojson
                 }
                 
             except Exception as e:
-                logger.error(f"Failed to read GeoJSON output: {str(e)}", exc_info=True)
-                return {"error": f"Failed to read GeoJSON output: {str(e)}"}
+                logger.error(f"Failed to process GeoJSON output: {str(e)}", exc_info=True)
+                return {"error": f"Failed to process GeoJSON output: {str(e)}"}
             
         finally:
             # Clean up temporary files

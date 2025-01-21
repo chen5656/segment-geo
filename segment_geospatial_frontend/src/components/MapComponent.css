@@ -70,4 +70,23 @@ input[type="file"] {
   border-radius: 4px;
   width: 100%;
   max-width: 300px;
+}
+
+.search-control {
+  position: absolute;
+  top: 10px;
+  left: 50px;
+  z-index: 1000;
+  width: 300px;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.search-control .MuiAutocomplete-root .MuiInputBase-root {
+  padding: 4px 8px;
+}
+
+.search-control .MuiAutocomplete-root .MuiInputBase-input {
+  padding: 4px 8px;
 } 

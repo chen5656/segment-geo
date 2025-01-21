@@ -16,6 +16,17 @@ app = FastAPI(
     title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
+# Remove the duplicate CORS middleware and keep only this one
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],  # Explicitly list allowed methods
+    allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=600,  # Cache preflight requests for 10 minutes
+)
+
 root_router = APIRouter()
 
 
@@ -39,15 +50,9 @@ def index(request: Request) -> Any:
 app.include_router(api_router, prefix=settings.API_V1_STR)
 app.include_router(root_router)
 
-# Set all CORS enabled origins
-if settings.BACKEND_CORS_ORIGINS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+# Remove this second CORS middleware block
+# if settings.BACKEND_CORS_ORIGINS:
+#     app.add_middleware(...)
 
 
 if __name__ == "__main__":

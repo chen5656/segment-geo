@@ -1,11 +1,14 @@
-import React, { useState, useRef } from 'react';
-import { MapContainer, TileLayer, FeatureGroup } from 'react-leaflet';
+import React, { useState, useRef, useEffect } from 'react';
+import { MapContainer, TileLayer, FeatureGroup, useMap, LayersControl } from 'react-leaflet';
 import { EditControl } from 'react-leaflet-draw';
-import { Tab, Tabs, TextField, Button, Box, Typography, Paper } from '@mui/material';
-import axios from 'axios';
+import { Tab, Tabs, TextField, Button, Box, Typography, Paper, CircularProgress, Autocomplete, InputAdornment, IconButton } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import './MapComponent.css';
+import axios from 'axios';
+const { BaseLayer } = LayersControl;
 
 // TabPanel component for MUI tabs
 function TabPanel(props) {
@@ -25,12 +28,135 @@ function TabPanel(props) {
   );
 }
 
+// Create a component to handle map interactions
+function MapController({ geoJsonData, setGeoJsonLayer }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (geoJsonData) {
+      // Remove existing layer if it exists
+      if (setGeoJsonLayer.current) {
+        setGeoJsonLayer.current.remove();
+      }
+
+      // Create new layer
+      const layer = L.geoJSON(geoJsonData, {
+        style: {
+          color: '#ff0000',
+          weight: 2,
+          opacity: 0.8,
+          fillOpacity: 0.4
+        }
+      }).addTo(map);
+
+      // Store reference to layer
+      setGeoJsonLayer.current = layer;
+
+      // Fit map bounds to the new layer
+      map.fitBounds(layer.getBounds());
+    }
+  }, [geoJsonData, map]);
+
+  return null;
+}
+
+// Add new SearchControl component
+function SearchControl() {
+  const map = useMap();
+  const [searchValue, setSearchValue] = useState('');
+  const [options, setOptions] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const searchAddress = async (query) => {
+    if (!query) return;
+    
+    setLoading(true);
+    try {
+      const response = await axios.get(`https://nominatim.openstreetmap.org/search`, {
+        params: {
+          q: query,
+          format: 'json',
+          limit: 5
+        }
+      });
+      
+      const locations = response.data.map(item => ({
+        label: item.display_name,
+        lat: parseFloat(item.lat),
+        lon: parseFloat(item.lon)
+      }));
+      
+      setOptions(locations);
+    } catch (error) {
+      console.error('Error searching address:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = (event, newValue) => {
+    if (newValue && newValue.lat && newValue.lon) {
+      map.setView([newValue.lat, newValue.lon], 18);
+    }
+  };
+
+  return (
+    <div className="search-control">
+      <Autocomplete
+        freeSolo
+        options={options}
+        loading={loading}
+        getOptionLabel={(option) => option.label || ''}
+        onInputChange={(event, newValue) => {
+          setSearchValue(newValue);
+          if (newValue.length > 3) {
+            searchAddress(newValue);
+          }
+        }}
+        onChange={handleSearch}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            size="small"
+            placeholder="Search address..."
+            InputProps={{
+              ...params.InputProps,
+              endAdornment: (
+                <InputAdornment position="end">
+                  {loading ? (
+                    <CircularProgress size={20} />
+                  ) : (
+                    <IconButton 
+                      size="small"
+                      onClick={() => searchAddress(searchValue)}
+                    >
+                      <SearchIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              )
+            }}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                searchAddress(searchValue);
+              }
+            }}
+          />
+        )}
+      />
+    </div>
+  );
+}
+
 const MapComponent = () => {
   const [tabValue, setTabValue] = useState(0);
   const [textPrompt, setTextPrompt] = useState('');
   const [zoomLevel, setZoomLevel] = useState(18);
   const [bbox, setBbox] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [geoJsonData, setGeoJsonData] = useState(null);
   const featureGroupRef = useRef();
+  const geoJsonLayerRef = useRef(null);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -71,24 +197,34 @@ const MapComponent = () => {
       return;
     }
 
+    setIsLoading(true);
     try {
-      const response = await axios.post('http://localhost:8000/predict', {
-        bbox: bbox,
+      const response = await axios.post('http://localhost:8001/api/v1/predict', {
+        bounding_box: bbox,
         text_prompt: textPrompt,
         zoom_level: zoomLevel
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
-      
+
+      setGeoJsonData(response.data.geojson);
       // Switch to results tab after successful detection
       setTabValue(1);
       console.log(response.data);
     } catch (error) {
       console.error('Error during detection:', error);
-      alert('Error during detection. Please try again.');
+      const errorMessage = error.response?.data?.error || error.message || 'Server error';
+      alert(`Error: ${errorMessage}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="map-layout">
+    <div className="map-layout"> 
+    
       <Paper className="sidebar">
         <Tabs
           value={tabValue}
@@ -110,6 +246,7 @@ const MapComponent = () => {
                 onChange={(e) => setTextPrompt(e.target.value)}
                 fullWidth
                 size="small"
+                disabled={isLoading}
               />
               
               <TextField
@@ -121,6 +258,7 @@ const MapComponent = () => {
                   native: true,
                 }}
                 size="small"
+                disabled={isLoading}
               >
                 {[15, 16, 17, 18, 19].map((zoom) => (
                   <option key={zoom} value={zoom}>
@@ -132,16 +270,28 @@ const MapComponent = () => {
               <Button 
                 variant="contained" 
                 onClick={handleDetect}
-                disabled={!bbox || !textPrompt}
+                disabled={!bbox || !textPrompt || isLoading}
                 size="small"
+                startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : null}
               >
-                Detect Objects
+                {isLoading ? 'Detecting...' : 'Detect Objects'}
               </Button>
             </Box>
           </TabPanel>
 
           <TabPanel value={tabValue} index={1}>
-            <Typography variant="body2">Detection results will appear here</Typography>
+            {geoJsonData ? (
+              <Box>
+                <Typography variant="body2" gutterBottom>
+                  Detection results displayed on map
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {geoJsonData.features?.length || 0} objects found
+                </Typography>
+              </Box>
+            ) : (
+              <Typography variant="body2">No detection results yet</Typography>
+            )}
           </TabPanel>
         </div>
       </Paper>
@@ -152,10 +302,36 @@ const MapComponent = () => {
           zoom={zoomLevel}
           style={{ height: "100vh", width: "100%" }}
         >
-          <TileLayer
-            url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
-            attribution="Google Satellite"
-          />
+          <LayersControl position="topright">
+            <BaseLayer checked name="ESRI Satellite">
+              <TileLayer
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                maxZoom={19}
+                attribution='&copy; <a href="https://www.esri.com/en-us/home">Esri</a>'
+              />
+            </BaseLayer>
+            <BaseLayer name="ESRI Topographic">
+              <TileLayer
+                url="https://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+                maxZoom={19}
+                attribution='&copy; <a href="https://www.esri.com/en-us/home">Esri</a>'
+              />
+            </BaseLayer>
+            <BaseLayer name="Google Satellite">
+              <TileLayer
+                url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+                maxZoom={20}
+                attribution="Google Satellite"
+              />
+            </BaseLayer>
+            <BaseLayer name="OpenStreetMap">
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                maxZoom={19}
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
+            </BaseLayer>
+          </LayersControl>
           <FeatureGroup ref={featureGroupRef}>
             <EditControl
               position="topright"
@@ -176,6 +352,8 @@ const MapComponent = () => {
               }}
             />
           </FeatureGroup>
+          <MapController geoJsonData={geoJsonData} setGeoJsonLayer={geoJsonLayerRef} />
+          <SearchControl />
         </MapContainer>
       </div>
     </div>
