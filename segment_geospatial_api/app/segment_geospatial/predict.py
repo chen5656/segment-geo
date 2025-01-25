@@ -27,14 +27,22 @@ logger.add(sys.stderr, level="INFO")
 
 
 class SegmentationPredictor:
+    _instance = None
+    _sam = None
+    
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(SegmentationPredictor, cls).__new__(cls)
+            # Initialize LangSAM only once
+            logger.info("Initializing LangSAM model...")
+            cls._instance._sam = LangSAM()
+            logger.success("LangSAM model initialized successfully")
+            cls._instance.transformer = Transformer.from_crs("EPSG:3857", "EPSG:4326", always_xy=True)
+        return cls._instance
+
     def __init__(self):
-        logger.info("Initializing LangSAM model...")
-        # Segmenting remote sensing imagery with text prompts and the Segment Anything Model 2 (SAM 2)
-        # self._sam = LangSAM(model_type="sam2-hiera-large")
-        self._sam = LangSAM()
-        logger.success("LangSAM model initialized successfully")
-        # Create coordinate transformer
-        self.transformer = Transformer.from_crs("EPSG:3857", "EPSG:4326", always_xy=True)
+        # The initialization is moved to __new__
+        pass
 
     @property
     def sam(self):
@@ -113,7 +121,7 @@ class SegmentationPredictor:
         
         # Check number of tiles
         total_tiles = self.count_tiles(bounding_box, zoom_level)
-        if total_tiles > 30:  
+        if total_tiles > 100:  
             logger.error(f"Too many tiles requested: {total_tiles}")
             return {"error": f"Area too large for zoom level {zoom_level}. Please reduce zoom level or area size."}
         else:
