@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ./segment_geospatial_api
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./segment_geospatial_api:/app
+    command: >
+      bash -c "
+        source /opt/conda/etc/profile.d/conda.sh &&
+        conda activate geo_app_env &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload"
+    environment:
+      - MODEL_PATH=/app/models
+      - PYTHONPATH=/app
+
+  web:
+    build:
+      context: ./segment_geospatial_frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./segment_geospatial_frontend:/app
+      - /app/node_modules
+    command: npm start
+    environment:
+      - REACT_APP_API_URL=http://api:8001
+    depends_on:
+      - api
