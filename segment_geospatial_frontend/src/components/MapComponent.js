@@ -9,6 +9,8 @@ import 'leaflet-draw/dist/leaflet.draw.css';
 import './MapComponent.css';
 import axios from 'axios';
 import DownloadIcon from '@mui/icons-material/Download';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 const { BaseLayer } = LayersControl;
 
 // TabPanel component for MUI tabs
@@ -175,6 +177,8 @@ const MapComponent = () => {
   const featureGroupRef = useRef();
   const geoJsonLayerRef = useRef(null);
   const [pointPosition, setPointPosition] = useState('bottom-right');
+  const [showRequestBody, setShowRequestBody] = useState(false);
+  const [lastRequestBody, setLastRequestBody] = useState(null);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -215,20 +219,23 @@ const MapComponent = () => {
       return;
     }
 
+    const requestBody = {
+      bounding_box: bbox,
+      text_prompt: textPrompt,
+      zoom_level: zoomLevel
+    };
+
+    setLastRequestBody(requestBody);
     setIsLoading(true);
+    
     try {
-      const response = await axios.post('http://localhost:8001/api/v1/predict', {
-        bounding_box: bbox,
-        text_prompt: textPrompt,
-        zoom_level: zoomLevel
-      }, {
+      const response = await axios.post('http://localhost:8001/api/v1/predict', requestBody, {
         headers: {
           'Content-Type': 'application/json'
         }
       });
 
       setGeoJsonData(response.data.geojson);
-      // Switch to results tab after successful detection
       setTabValue(1);
       console.log(response.data);
     } catch (error) {
@@ -323,6 +330,36 @@ const MapComponent = () => {
               >
                 {isLoading ? 'Detecting...' : 'Detect Objects'}
               </Button>
+
+              {lastRequestBody && (
+                <>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => setShowRequestBody(!showRequestBody)}
+                    startIcon={showRequestBody ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                  >
+                    {showRequestBody ? 'Hide Request' : 'Show Request'}
+                  </Button>
+
+                  {showRequestBody && (
+                    <Paper 
+                      elevation={0} 
+                      variant="outlined"
+                      sx={{ 
+                        p: 1,
+                        backgroundColor: '#f5f5f5',
+                        maxHeight: '200px',
+                        overflow: 'auto'
+                      }}
+                    >
+                      <Typography variant="caption" component="pre" sx={{ margin: 0 }}>
+                        {JSON.stringify(lastRequestBody, null, 2)}
+                      </Typography>
+                    </Paper>
+                  )}
+                </>
+              )}
             </Box>
           </TabPanel>
 

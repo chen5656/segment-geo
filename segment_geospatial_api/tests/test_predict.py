@@ -2,6 +2,8 @@ import os
 import sys
 import asyncio
 import glob
+import json
+from datetime import datetime
 
 # Add the project root directory to Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -9,6 +11,23 @@ sys.path.append(project_root)
 
 from app.segment_geospatial.predict import predictor
 from app.schemas.predict import PredictionRequest
+
+def save_geojson(data, prefix="test_result"):
+    """Save GeoJSON data to a file with timestamp"""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"{prefix}_{timestamp}.geojson"
+    
+    # Create results directory if it doesn't exist
+    results_dir = os.path.join(project_root, "test_results")
+    os.makedirs(results_dir, exist_ok=True)
+    
+    filepath = os.path.join(results_dir, filename)
+    
+    with open(filepath, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+    
+    print(f"GeoJSON saved to: {filepath}")
+    return filepath
 
 async def call_predict(request: PredictionRequest):
     try:        
@@ -26,12 +45,18 @@ async def call_predict(request: PredictionRequest):
 if __name__ == "__main__":
     # [min_longitude, min_latitude, max_longitude, max_latitude]
     # [left, bottom, right, top]
-    request = PredictionRequest(
-        # Using a smaller bounding box in Dallas area
-        bounding_box=[-96.81040, 32.97140, -96.81000, 32.97180],
-        text_prompt="trees",
-        zoom_level=19  # Reduced zoom level for better performance
-    )
+    request_data = {
+        "bounding_box": [
+            -96.79400324821474,
+            32.770171736957685,
+            -96.79177165031435,
+            32.770758121199606
+        ],
+        "text_prompt": "trees",
+        "zoom_level": 18
+    }
+    
+    request = PredictionRequest(**request_data)
     
     # Run the async function
     result = asyncio.run(call_predict(request))
@@ -46,6 +71,14 @@ if __name__ == "__main__":
     feature = result['geojson']['features'][0]
     assert feature['type'] == 'Feature'
     assert feature['geometry']['type'] == 'Polygon'
+    
+    # Save the GeoJSON result
+    if result['geojson']:
+        saved_file = save_geojson(
+            result['geojson'], 
+            f"trees_detection_{request.zoom_level}"
+        )
+        print(f"Found {len(result['geojson']['features'])} features")
      
     # Verify temporary files are cleaned up
     temp_files = glob.glob("*.tif") + glob.glob("*.geojson")

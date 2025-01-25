@@ -13,14 +13,10 @@ services:
   web:
     build:
       context: ./segment_geospatial_frontend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile  # 注意这里使用生产版本的Dockerfile
     ports:
       - "3000:3000"
-    volumes:
-      - ./segment_geospatial_frontend:/app
-      - /app/node_modules
-    command: npm start
     environment:
       - REACT_APP_API_URL=http://api:8001
     depends_on:
-      - api
+      - api 
