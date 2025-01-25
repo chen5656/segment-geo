@@ -19,9 +19,9 @@
 }
 
 .map-container {
-  flex-grow: 1;
-  height: 100vh;
   position: relative;
+  height: 80vh;
+  width: 100%;
 }
 
 .leaflet-container {
@@ -89,4 +89,47 @@ input[type="file"] {
 
 .search-control .MuiAutocomplete-root .MuiInputBase-input {
   padding: 4px 8px;
+}
+
+.map-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+}
+
+.upload-btn {
+  background-color: white;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.upload-btn:hover {
+  background-color: #f0f0f0;
+  border-color: #999;
+}
+
+.upload-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.clear-btn {
+  background-color: #ff4444;
+  color: white;
+  border: 2px solid #cc0000;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.clear-btn:hover {
+  background-color: #cc0000;
+  border-color: #990000;
 } 

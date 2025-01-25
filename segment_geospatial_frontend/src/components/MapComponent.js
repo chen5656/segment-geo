@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, FeatureGroup, useMap, LayersControl } from 'react-leaflet';
 import { EditControl } from 'react-leaflet-draw';
 import { Tab, Tabs, TextField, Button, Box, Typography, Paper, CircularProgress, Autocomplete, InputAdornment, IconButton } from '@mui/material';
@@ -11,6 +11,7 @@ import axios from 'axios';
 import DownloadIcon from '@mui/icons-material/Download';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import debounce from 'lodash/debounce';
 const { BaseLayer } = LayersControl;
 
 // TabPanel component for MUI tabs
@@ -32,16 +33,18 @@ function TabPanel(props) {
 }
 
 // Create a component to handle map interactions
-function MapController({ geoJsonData, setGeoJsonLayer, pointPosition }) {
+function MapController({ geoJsonData, uploadedGeojson, setGeoJsonLayer, pointPosition }) {
   const map = useMap();
   
   useEffect(() => {
-    if (geoJsonData) {
-      if (setGeoJsonLayer.current) {
-        setGeoJsonLayer.current.remove();
-      }
+    // Remove existing layers
+    if (setGeoJsonLayer.current) {
+      setGeoJsonLayer.current.remove();
+    }
 
-      const points = geoJsonData.features.map(feature => {
+    // Function to create points from features
+    const createPoints = (features) => {
+      return features.map(feature => {
         const bounds = L.geoJSON(feature).getBounds();
         // Get coordinates based on selected position
         let point;
@@ -69,45 +72,77 @@ function MapController({ geoJsonData, setGeoJsonLayer, pointPosition }) {
           weight: 1
         });
       });
+    };
 
-      const layer = L.featureGroup(points).addTo(map);
+    // Create layers for both types of data
+    const layers = [];
+    
+    if (geoJsonData?.features) {
+      const detectionPoints = createPoints(geoJsonData.features);
+      layers.push(...detectionPoints);
+    }
+
+    if (uploadedGeojson?.features) {
+      // Use a different color for uploaded features
+      const uploadedPoints = uploadedGeojson.features.map(feature => {
+        const geojson = L.geoJSON(feature, {
+          style: {
+            color: '#0000ff',
+            weight: 2,
+            opacity: 0.8,
+            fillColor: '#0000ff',
+            fillOpacity: 0.3
+          }
+        });
+        return geojson;
+      });
+      layers.push(...uploadedPoints);
+    }
+
+    if (layers.length > 0) {
+      const layer = L.featureGroup(layers).addTo(map);
       setGeoJsonLayer.current = layer;
       map.fitBounds(layer.getBounds());
     }
-  }, [geoJsonData, map, pointPosition]);
+  }, [geoJsonData, uploadedGeojson, map, pointPosition]);
 
   return null;
 }
 
-// Add new SearchControl component
+// Update the SearchControl component
 function SearchControl() {
   const map = useMap();
   const [searchValue, setSearchValue] = useState('');
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const MAPBOX_TOKEN = 'pk.eyJ1IjoiaHVhanVuMTExMSIsImEiOiJjbTZjbnh5dDUwYXdsMmxvajhjbWxkeHI3In0.3qeLn9-pd0Dk2aam30rvbg';
 
   const searchAddress = async (query) => {
     if (!query) return;
     
     setLoading(true);
     try {
-      const response = await axios.get(`https://nominatim.openstreetmap.org/search`, {
-        params: {
-          q: query,
-          format: 'json',
-          limit: 5
+      const response = await axios.get(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json`,
+        {
+          params: {
+            access_token: MAPBOX_TOKEN,
+            limit: 5,
+            types: 'address,place,locality,neighborhood'
+          }
         }
-      });
+      );
       
-      const locations = response.data.map(item => ({
-        label: item.display_name,
-        lat: parseFloat(item.lat),
-        lon: parseFloat(item.lon)
+      const locations = response.data.features.map(feature => ({
+        label: feature.place_name,
+        lat: feature.center[1],
+        lon: feature.center[0]
       }));
       
       setOptions(locations);
     } catch (error) {
       console.error('Error searching address:', error);
+      setOptions([]);
     } finally {
       setLoading(false);
     }
@@ -119,6 +154,16 @@ function SearchControl() {
     }
   };
 
+  // Debounce the search to avoid too many API calls
+  const debouncedSearch = useCallback(
+    debounce((query) => {
+      if (query.length > 2) {
+        searchAddress(query);
+      }
+    }, 300),
+    []
+  );
+
   return (
     <div className="search-control">
       <Autocomplete
@@ -128,16 +173,14 @@ function SearchControl() {
         getOptionLabel={(option) => option.label || ''}
         onInputChange={(event, newValue) => {
           setSearchValue(newValue);
-          if (newValue.length > 3) {
-            searchAddress(newValue);
-          }
+          debouncedSearch(newValue);
         }}
         onChange={handleSearch}
         renderInput={(params) => (
           <TextField
             {...params}
             size="small"
-            placeholder="Search address..."
+            placeholder="Search location..."
             InputProps={{
               ...params.InputProps,
               endAdornment: (
@@ -167,11 +210,9 @@ function SearchControl() {
   );
 }
 
-const MapComponent = () => {
+const MapComponent = ({ center, zoom, predictions, onMapClick, onFileUpload }) => {
   const [tabValue, setTabValue] = useState(0);
   const [textPrompt, setTextPrompt] = useState('');
-  const [zoomLevel, setZoomLevel] = useState(18);
-  const [bbox, setBbox] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [geoJsonData, setGeoJsonData] = useState(null);
   const featureGroupRef = useRef();
@@ -179,6 +220,10 @@ const MapComponent = () => {
   const [pointPosition, setPointPosition] = useState('bottom-right');
   const [showRequestBody, setShowRequestBody] = useState(false);
   const [lastRequestBody, setLastRequestBody] = useState(null);
+  const fileInputRef = useRef(null);
+  const [bbox, setBbox] = useState(null);
+  const [zoomLevel, setZoomLevel] = useState(zoom || 13);
+  const [uploadedGeojson, setUploadedGeojson] = useState(null);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -189,7 +234,6 @@ const MapComponent = () => {
     const featureGroup = featureGroupRef.current;
     if (featureGroup) {
       featureGroup.clearLayers();
-      setBbox(null);
     }
   };
 
@@ -259,6 +303,42 @@ const MapComponent = () => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+    }
+  };
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const geojsonData = JSON.parse(e.target.result);
+          // Validate GeoJSON format
+          if (geojsonData.type !== 'FeatureCollection') {
+            alert('Invalid GeoJSON format: Must be a FeatureCollection');
+            return;
+          }
+          setUploadedGeojson(geojsonData);
+          onFileUpload(geojsonData); // Call parent handler if needed
+        } catch (error) {
+          console.error('Error parsing GeoJSON:', error);
+          alert('Invalid GeoJSON file');
+        }
+      };
+      reader.readAsText(file);
+    } catch (error) {
+      console.error('Error reading file:', error);
+      alert('Error reading file');
+    }
+  };
+
+  // Add clear function for uploaded data
+  const handleClearUpload = () => {
+    setUploadedGeojson(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -403,8 +483,33 @@ const MapComponent = () => {
       </Paper>
 
       <div className="map-container">
+        <div className="map-controls">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            accept=".geojson,.json"
+            style={{ display: 'none' }}
+          />
+          <div className="upload-controls">
+            <button 
+              className="upload-btn"
+              onClick={() => fileInputRef.current.click()}
+            >
+              Upload GeoJSON
+            </button>
+            {uploadedGeojson && (
+              <button 
+                className="clear-btn"
+                onClick={handleClearUpload}
+              >
+                Clear Upload
+              </button>
+            )}
+          </div>
+        </div>
         <MapContainer
-          center={[32.77058258620389, -96.79199913948932]}
+          center={center || [32.77058258620389, -96.79199913948932]}
           zoom={zoomLevel}
           style={{ height: "100vh", width: "100%" }}
         >
@@ -460,6 +565,7 @@ const MapComponent = () => {
           </FeatureGroup>
           <MapController 
             geoJsonData={geoJsonData} 
+            uploadedGeojson={uploadedGeojson}
             setGeoJsonLayer={geoJsonLayerRef}
             pointPosition={pointPosition}
           />

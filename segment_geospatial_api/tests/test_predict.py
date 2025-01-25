@@ -46,15 +46,15 @@ if __name__ == "__main__":
     # [min_longitude, min_latitude, max_longitude, max_latitude]
     # [left, bottom, right, top]
     request_data = {
-        "bounding_box": [
-            -96.79400324821474,
-            32.770171736957685,
-            -96.79177165031435,
-            32.770758121199606
-        ],
-        "text_prompt": "trees",
-        "zoom_level": 18
-    }
+  "bounding_box": [
+    -98.90350699424745,
+    33.07647422121555,
+    -98.89596462249756,
+    33.08045676828782
+  ],
+  "text_prompt": "wind turbine",
+  "zoom_level": 19
+}
     
     request = PredictionRequest(**request_data)
     
