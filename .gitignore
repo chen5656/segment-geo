@@ -120,3 +120,4 @@ packages/car_evaluation_model/car_evaluation_model/data/raw/*.csv
 packages/car_evaluation_model/car_evaluation_model/data/raw/*.data
 
 .my_data/
+*.tif
