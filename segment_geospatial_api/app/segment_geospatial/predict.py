@@ -110,6 +110,21 @@ class SegmentationPredictor:
         }
         return geojson_data
 
+    def __del__(self):
+        logger.info("Deleting SegmentationPredictor instance")
+        self._sam = None
+        self.transformer = None
+        self._instance = None   
+
+    def download_satellite_image(self, image_name, bounding_box, zoom_level):
+        tms_to_geotiff(
+            image_name,
+            bounding_box,
+            zoom_level,
+            source="Satellite",
+            overwrite=True
+        )
+
     async def make_prediction(self, *, bounding_box: list, text_prompt: str, zoom_level: int = 20) -> Dict[str, Any]:
         """Make a prediction using SAM."""
         logger.info(f"Starting prediction for text_prompt='{text_prompt}', bbox={bounding_box}, zoom={zoom_level}")
@@ -146,7 +161,7 @@ class SegmentationPredictor:
             # Download satellite imagery
             logger.info("Downloading satellite imagery...")
             try:
-                tms_to_geotiff(
+                self.download_satellite_image(
                     input_image,
                     bounding_box,
                     zoom_level,
@@ -162,9 +177,7 @@ class SegmentationPredictor:
             logger.info("Running SAM prediction...")
             try:
                 # Run synchronous predict method in thread pool
-                await asyncio.get_event_loop().run_in_executor(
-                    None,
-                    self.sam.predict,
+                self.sam.predict(
                     input_image, 
                     text_prompt, 
                     0.24,  # box_threshold 
