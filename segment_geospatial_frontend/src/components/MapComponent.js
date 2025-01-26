@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, FeatureGroup, useMap, LayersControl } from 'react-leaflet';
 import { EditControl } from 'react-leaflet-draw';
-import { Tab, Tabs, TextField, Button, Box, Typography, Paper, CircularProgress, Autocomplete, InputAdornment, IconButton } from '@mui/material';
+import { Tab, TextField, Button, Box, Typography, Paper, CircularProgress, Autocomplete, InputAdornment, IconButton } from '@mui/material';
+import { TabContext, TabList, TabPanel } from '@mui/lab';
+
 import SearchIcon from '@mui/icons-material/Search';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -13,24 +15,6 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import debounce from 'lodash/debounce';
 const { BaseLayer } = LayersControl;
-
-// TabPanel component for MUI tabs
-function TabPanel(props) {
-  const { children, value, index, ...other } = props;
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 2 }}>
-          {children}
-        </Box>
-      )}
-    </div>
-  );
-}
 
 // Create a component to handle map interactions
 function MapController({ geoJsonData, uploadedGeojson, setGeoJsonLayer, pointPosition }) {
@@ -211,7 +195,7 @@ function SearchControl() {
 }
 
 const MapComponent = ({ center, zoom, predictions, onMapClick, onFileUpload }) => {
-  const [tabValue, setTabValue] = useState(0);
+  const [tabValue, setTabValue] = useState('1');
   const [textPrompt, setTextPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [geoJsonData, setGeoJsonData] = useState(null);
@@ -280,7 +264,7 @@ const MapComponent = ({ center, zoom, predictions, onMapClick, onFileUpload }) =
       });
 
       setGeoJsonData(response.data.geojson);
-      setTabValue(1);
+      setTabValue('2');
       console.log(response.data);
     } catch (error) {
       console.error('Error during detection:', error);
@@ -343,23 +327,18 @@ const MapComponent = ({ center, zoom, predictions, onMapClick, onFileUpload }) =
   };
 
   return (
-    <div className="map-layout"> 
-    
-      <Paper className="sidebar">
-        <Tabs
-          value={tabValue}
-          onChange={handleTabChange}
-          orientation="vertical"
-          sx={{ borderRight: 1, borderColor: 'divider' }}
-        >
-          <Tab label="Detection Settings" />
-          <Tab label="Results" />
-        </Tabs>
-
-        <div className="tab-panels">
-          <TabPanel value={tabValue} index={0}>
+    <div className="map-layout">
+      <Box sx={{ width: '100%', typography: 'body1' }}>
+        <TabContext value={tabValue}>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <TabList onChange={handleTabChange} aria-label="map tabs">
+              <Tab label="Detection" value="1" />
+              <Tab label="Results" value="2" />
+              <Tab label="Instructions" value="3" />
+            </TabList>
+          </Box>
+          <TabPanel value="1">
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-
               <TextField
                 select
                 label="Point Position"
@@ -442,8 +421,7 @@ const MapComponent = ({ center, zoom, predictions, onMapClick, onFileUpload }) =
               )}
             </Box>
           </TabPanel>
-
-          <TabPanel value={tabValue} index={1}>
+          <TabPanel value="2">
             {geoJsonData ? (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Typography variant="body2" gutterBottom>
@@ -479,8 +457,13 @@ const MapComponent = ({ center, zoom, predictions, onMapClick, onFileUpload }) =
               <Typography variant="body2">No detection results yet</Typography>
             )}
           </TabPanel>
-        </div>
-      </Paper>
+          <TabPanel value="3">
+            <Typography variant="body2">
+              Instructions for using the map will go here
+            </Typography>
+          </TabPanel>
+        </TabContext>
+      </Box>
 
       <div className="map-container">
         <div className="map-controls">
