@@ -4,6 +4,7 @@ import { TabContext, TabList, TabPanel } from '@mui/lab';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import DownloadIcon from '@mui/icons-material/Download';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 const ControlPanel = ({ 
   bbox,
@@ -40,6 +41,7 @@ const ControlPanel = ({
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               select
+              disabled 
               label="Point Position"
               value={pointPosition}
               onChange={(e) => setPointPosition(e.target.value)}
@@ -48,6 +50,7 @@ const ControlPanel = ({
             >
               <option value="top-right">Top Right</option>
               <option value="top-left">Top Left</option>
+              <option value="top-left">Center</option>
               <option value="bottom-right">Bottom Right</option>
               <option value="bottom-left">Bottom Left</option>
             </TextField>
@@ -78,12 +81,12 @@ const ControlPanel = ({
                 </option>
               ))}
             </TextField>
-
+            <div> <ArrowForwardIcon />  Draw a rectangle to start</div>
             <Button 
-              variant="contained" 
-              onClick={handleDetect}
-              disabled={!bbox || !textPrompt || isLoading}
-              size="small"
+                variant="contained" 
+                onClick={handleDetect}
+                disabled={!bbox || !textPrompt || isLoading}
+                size="small"
               startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : null}
             >
               {isLoading ? 'Detecting...' : 'Detect Objects'}

@@ -133,3 +133,35 @@ input[type="file"] {
   background-color: #cc0000;
   border-color: #990000;
 } 
+
+.leaflet-draw {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 10px;
+  border-radius: 4px;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+}
+
+.leaflet-draw-draw-rectangle {
+  background-image: none !important;
+  position: relative !important;
+}
+
+.leaflet-draw-draw-rectangle::before {
+  /* 使用自定义SVG */
+  content: '' !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/%3E%3C/svg%3E") !important;
+  width: 18px !important;
+  height: 18px !important;
+  display: block !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+}
+
+/* 悬停状态 */
+.leaflet-draw-draw-rectangle:hover {
+  background-color: #f4f4f4 !important;
+}

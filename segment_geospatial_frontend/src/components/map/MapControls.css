@@ -10,8 +10,11 @@
 }
 
 .upload-controls {
+  position: absolute;
   display: flex;
   gap: 8px;
+  top: 100px;
+  left: 20px;
 }
 
 .upload-btn,
