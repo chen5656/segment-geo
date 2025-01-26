@@ -23,6 +23,8 @@ const MapComponent = ({ center, zoom }) => {
   const [lastRequestBody, setLastRequestBody] = useState(null);
   const fileInputRef = useRef(null);
   const [bbox, setBbox] = useState(null);
+  const [box_threshold, setBoxThreshold] = useState(0.24);
+  const [text_threshold, setTextThreshold] = useState(0.24);
   const [zoomLevel, setZoomLevel] = useState(zoom || 13);
   const [uploadedGeojson, setUploadedGeojson] = useState(null);
 
@@ -62,7 +64,9 @@ const MapComponent = ({ center, zoom }) => {
     const requestBody = {
       bounding_box: bbox,
       text_prompt: textPrompt,
-      zoom_level: zoomLevel
+      zoom_level: zoomLevel,
+      box_threshold: box_threshold,
+      text_threshold: text_threshold,
     };
 
     setLastRequestBody(requestBody);

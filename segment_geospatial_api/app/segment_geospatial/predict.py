@@ -1,5 +1,4 @@
 from samgeo import tms_to_geotiff, raster_to_geojson
-from samgeo import SamGeo2
 from samgeo.text_sam import LangSAM
 import uuid
 import json
@@ -7,7 +6,6 @@ import math
 from typing import Dict, Any
 from loguru import logger
 import sys
-import asyncio
 import itertools
 import os
 from pyproj import Transformer
@@ -31,6 +29,7 @@ class SegmentationPredictor:
     """Segmentation predictor class."""
     _instance = None
     _initialized = False
+    DEFAULT_MODEL_TYPE = "sam2-hiera-small"
     
     def __new__(cls):
         """Create a new instance if one doesn't exist."""
@@ -42,7 +41,7 @@ class SegmentationPredictor:
         """Empty init to maintain singleton pattern."""
         pass
 
-    def setup(self, model_type="sam2-hiera-large"):
+    def setup(self, model_type=DEFAULT_MODEL_TYPE):
         """Initialize the LangSAM model.
         
         Args:
@@ -335,3 +334,4 @@ class SegmentationPredictor:
 
 # Create singleton instance
 predictor = SegmentationPredictor()
+predictor.setup()

@@ -18,7 +18,7 @@ def save_geojson(data, prefix="test_result"):
     filename = f"{prefix}_{timestamp}.geojson"
     
     # Create results directory if it doesn't exist
-    results_dir = os.path.join(project_root, "test_results")
+    results_dir = os.path.join(project_root, "tests/test_results")
     os.makedirs(results_dir, exist_ok=True)
     
     filepath = os.path.join(results_dir, filename)
@@ -35,6 +35,8 @@ async def call_predict(request: PredictionRequest):
             bounding_box=request.bounding_box,
             text_prompt=request.text_prompt,
             zoom_level=request.zoom_level,
+            box_threshold=request.box_threshold,
+            text_threshold=request.text_threshold,  
         )
         return _result
         
@@ -47,14 +49,17 @@ if __name__ == "__main__":
     # [left, bottom, right, top]
     request_data = {
         "bounding_box": [
-            -96.77738159894946,
-            32.78197733203472,
-            -96.77620947360994,
-            32.78268991937202
+            -96.78806887088176,
+            32.76760907972303,
+            -96.78423468921088,
+            32.769729127062774
         ],
-        "text_prompt": "car",
-        "zoom_level": 19
+        "text_prompt": "buildings",
+        "zoom_level": 18,
+        "box_threshold": 0.4,
+        "text_threshold": 0.24,
     }
+        
     
     request = PredictionRequest(**request_data)
     

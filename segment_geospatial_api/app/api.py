@@ -1,6 +1,6 @@
 from typing import Union
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from app.segment_geospatial.predict import predictor
 from loguru import logger
