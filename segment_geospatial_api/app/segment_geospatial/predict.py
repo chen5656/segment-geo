@@ -1,4 +1,5 @@
 from samgeo import tms_to_geotiff, raster_to_geojson
+from samgeo import SamGeo2
 from samgeo.text_sam import LangSAM
 import uuid
 import json
@@ -27,25 +28,77 @@ logger.add(sys.stderr, level="INFO")
 
 
 class SegmentationPredictor:
+    """Segmentation predictor class."""
     _instance = None
-    _sam = None
+    _initialized = False
     
     def __new__(cls):
+        """Create a new instance if one doesn't exist."""
         if cls._instance is None:
             cls._instance = super(SegmentationPredictor, cls).__new__(cls)
-            # Initialize LangSAM only once
-            logger.info("Initializing LangSAM model...")
-            cls._instance._sam = LangSAM()
-            logger.success("LangSAM model initialized successfully")
-            cls._instance.transformer = Transformer.from_crs("EPSG:3857", "EPSG:4326", always_xy=True)
         return cls._instance
 
     def __init__(self):
-        # The initialization is moved to __new__
+        """Empty init to maintain singleton pattern."""
         pass
+
+    def setup(self, model_type="sam2-hiera-large"):
+        """Initialize the LangSAM model.
+        
+        Args:
+            model_type (str): The model type to use. Can be one of:
+                SAM 1 models:
+                - "vit_h"
+                - "vit_l"
+                - "vit_b"
+                SAM 2 models:
+                - "sam2-hiera-tiny"
+                - "sam2-hiera-small"
+                - "sam2-hiera-base-plus"
+                - "sam2-hiera-large" (default)
+        
+        Raises:
+            ValueError: If invalid model_type is provided.
+            RuntimeError: If model initialization fails.
+        """
+        logger.info("Initializing LangSAM model...")
+        
+        # Validate model_type
+        valid_models = [
+            # SAM 1 models
+            "vit_h", "vit_l", "vit_b",
+            # SAM 2 models
+            "sam2-hiera-tiny",
+            "sam2-hiera-small",
+            "sam2-hiera-base-plus", 
+            "sam2-hiera-large"
+        ]
+        if model_type not in valid_models:
+            raise ValueError(
+                f"Invalid model_type: {model_type}. Must be one of: {valid_models}"
+            )
+        
+        try:
+            self._sam = LangSAM(model_type=model_type)
+            self.transformer = Transformer.from_crs("EPSG:3857", "EPSG:4326", always_xy=True)
+            self._initialized = True
+            logger.success("LangSAM model initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize LangSAM model: {str(e)}")
+            raise RuntimeError(f"Failed to initialize LangSAM model: {str(e)}")
 
     @property
     def sam(self):
+        """Get the SAM model instance, initializing with default model if needed.
+        
+        Returns:
+            LangSAM: The initialized SAM model instance.
+        
+        Raises:
+            RuntimeError: If model initialization fails.
+        """
+        if not self._initialized:
+            self.setup()  # Initialize with default model
         return self._sam
 
     @staticmethod
@@ -111,10 +164,12 @@ class SegmentationPredictor:
         return geojson_data
 
     def __del__(self):
-        logger.info("Deleting SegmentationPredictor instance")
-        self._sam = None
-        self.transformer = None
-        self._instance = None   
+        """Cleanup when instance is deleted."""
+        if hasattr(self, '_sam'):
+            logger.info("Cleaning up SegmentationPredictor instance")
+            self._sam = None
+            self.transformer = None
+            SegmentationPredictor._initialized = False
 
     def download_satellite_image(self, image_name, bounding_box, zoom_level):
         tms_to_geotiff(
@@ -125,9 +180,34 @@ class SegmentationPredictor:
             overwrite=True
         )
 
-    async def make_prediction(self, *, bounding_box: list, text_prompt: str, zoom_level: int = 20) -> Dict[str, Any]:
-        """Make a prediction using SAM."""
-        logger.info(f"Starting prediction for text_prompt='{text_prompt}', bbox={bounding_box}, zoom={zoom_level}")
+    async def make_prediction(
+        self, 
+        *, 
+        bounding_box: list, 
+        text_prompt: str, 
+        box_threshold: float = 0.3,  # Added required parameter
+        text_threshold: float = 0.3, # Added required parameter
+        zoom_level: int = 20
+    ) -> Dict[str, Any]:
+        """Make a prediction using SAM.
+        
+        Args:
+            bounding_box (list): Coordinates [west, south, east, north]
+            text_prompt (str): Text description of object to detect
+            box_threshold (float): Confidence threshold for object detection boxes (0-1)
+            text_threshold (float): Confidence threshold for text-to-image matching (0-1)
+            zoom_level (int, optional): Zoom level for satellite imagery. Defaults to 20.
+        """
+        logger.info(
+            f"Starting prediction for text_prompt='{text_prompt}', "
+            f"bbox={bounding_box}, zoom={zoom_level}, "
+            f"box_threshold={box_threshold}, text_threshold={text_threshold}"
+        )
+        
+        # Validate thresholds
+        if not (0 < box_threshold <= 1) or not (0 < text_threshold <= 1):
+            logger.error(f"Invalid threshold values: box={box_threshold}, text={text_threshold}")
+            return {"error": "Threshold values must be between 0 and 1"}
         
         # Validate inputs
         if len(bounding_box) != 4:
@@ -164,9 +244,7 @@ class SegmentationPredictor:
                 self.download_satellite_image(
                     input_image,
                     bounding_box,
-                    zoom_level,
-                    source="Satellite",
-                    overwrite=True
+                    zoom_level
                 )
                 logger.success("Satellite imagery downloaded successfully")
             except Exception as e:
@@ -180,8 +258,8 @@ class SegmentationPredictor:
                 self.sam.predict(
                     input_image, 
                     text_prompt, 
-                    0.24,  # box_threshold 
-                    0.24   # text_threshold
+                    box_threshold,  # Use input parameter
+                    text_threshold # Use input parameter
                 )
                 logger.success("SAM prediction completed successfully")
             except Exception as e:
@@ -257,4 +335,3 @@ class SegmentationPredictor:
 
 # Create singleton instance
 predictor = SegmentationPredictor()
-

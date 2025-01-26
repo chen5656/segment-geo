@@ -34,7 +34,7 @@ async def call_predict(request: PredictionRequest):
         _result = await predictor.make_prediction(
             bounding_box=request.bounding_box,
             text_prompt=request.text_prompt,
-            zoom_level=request.zoom_level
+            zoom_level=request.zoom_level,
         )
         return _result
         
@@ -46,15 +46,15 @@ if __name__ == "__main__":
     # [min_longitude, min_latitude, max_longitude, max_latitude]
     # [left, bottom, right, top]
     request_data = {
-  "bounding_box": [
-    -96.77738159894946,
-    32.78197733203472,
-    -96.77620947360994,
-    32.78268991937202
-  ],
-  "text_prompt": "car",
-  "zoom_level": 19
-}
+        "bounding_box": [
+            -96.77738159894946,
+            32.78197733203472,
+            -96.77620947360994,
+            32.78268991937202
+        ],
+        "text_prompt": "car",
+        "zoom_level": 19
+    }
     
     request = PredictionRequest(**request_data)
     
