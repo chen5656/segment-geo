@@ -31,12 +31,26 @@ class PredictionRequest(BaseModel):
         ge=1,
         le=22
     )
+    box_threshold: float = Field(
+        default=0.24,
+        description="Confidence threshold for object detection boxes (0-1)",
+        ge=0,
+        le=1
+    )
+    text_threshold: float = Field(
+        default=0.24,
+        description="Confidence threshold for text-to-image matching (0-1)",
+        ge=0,
+        le=1
+    )
 
     class Config:
         json_schema_extra = {
             "example": {
                 "bounding_box": [-96.81040, 32.97140, -96.81000, 32.97180],
                 "text_prompt": "trees",
-                "zoom_level": 19
+                "zoom_level": 19,
+                "box_threshold": 0.24,
+                "text_threshold": 0.24
             }
         }

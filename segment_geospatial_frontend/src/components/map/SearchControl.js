@@ -1,20 +1,18 @@
 import React, { useState, useCallback } from 'react';
-import { useMap } from 'react-leaflet';
 import { TextField, CircularProgress, InputAdornment, IconButton, Autocomplete } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import { useMap } from 'react-leaflet';
 import axios from 'axios';
 import debounce from 'lodash/debounce';
+import './SearchControl.css';
 
-if (!process.env.REACT_APP_MAPBOX_TOKEN) {
-  console.warn('Mapbox token is not set in environment variables. Search functionality will not work.');
-}
-
-function SearchControl() {
+const SearchControl = () => {
   const map = useMap();
   const [searchValue, setSearchValue] = useState('');
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
-  
+  const MAPBOX_TOKEN = 'pk.eyJ1IjoiaHVhanVuMTExMSIsImEiOiJjbTZjbnh5dDUwYXdsMmxvajhjbWxkeHI3In0.3qeLn9-pd0Dk2aam30rvbg';
+
   const searchAddress = async (query) => {
     if (!query) return;
     
@@ -24,7 +22,7 @@ function SearchControl() {
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json`,
         {
           params: {
-            access_token: process.env.REACT_APP_MAPBOX_TOKEN,
+            access_token: MAPBOX_TOKEN,
             limit: 5,
             types: 'address,place,locality,neighborhood'
           }
@@ -105,6 +103,6 @@ function SearchControl() {
       />
     </div>
   );
-}
+};
 
 export default SearchControl; 
