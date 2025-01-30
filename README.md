@@ -3,18 +3,18 @@ Clone this repository to your computer
 # make a copy of .env_example and rename it to .env, and update its value.
 
 # run with docker
-## right click on file docker-compose.dev.yml and select "Compose Up"
+right click on file docker-compose.dev.yml and select "Compose Up"
 
 # run without docker
 
 ## First time user
+run npm install for frontend
 ```
-// run npm install for frontend
 cd segment_geospatial_frontend
 npm install
 ```
+run conda install for backend
 ```
-// run conda install for backend
 cd segment_geospatial_api
 conda env create -f environment.yml
 conda activate geo_env
