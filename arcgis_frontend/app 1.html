@@ -230,8 +230,6 @@
         url: 'https://gis.apfo.usda.gov/arcgis/rest/services/NAIP/USDA_CONUS_PRIME/ImageServer'
       });
       map.addMany([vexcel_1520]);
-      const detectionLayer = new GraphicsLayer();
-      map.add(detectionLayer);
       const graphicsLayer = new GraphicsLayer();
       map.add(graphicsLayer);
       const toolButton = document.createElement("button");
@@ -244,12 +242,15 @@
       document.body.appendChild(toolButton);
 
       let objectDetectionPanel;
-      let sketchLayer = new GraphicsLayer();
-      map.add(sketchLayer);
+      let detectionLayer = new GraphicsLayer();      
+      let detectionParameters = {
+        layer: detectionLayer,
+      };
+      map.add(detectionLayer);
 
       view.when(() => {
         import('./components/ObjectDetectionPanel.js').then(module => {
-          objectDetectionPanel = new module.ObjectDetectionPanel(view, sketchLayer);
+          objectDetectionPanel = new module.ObjectDetectionPanel(view, detectionParameters);
 
           // Update tool button click handler
           toolButton.addEventListener("click", () => {
@@ -259,7 +260,7 @@
             if (toolActive) {
               objectDetectionPanel.show();
               sketch = new Sketch({
-                layer: sketchLayer,
+                layer: detectionLayer,
                 view: view,
                 container: "sketch_container",
                 availableCreateTools: ["rectangle"],
@@ -270,61 +271,24 @@
                   },
                   settingsMenu: false,
                   undoRedoMenu: false,
-                },
+                },                
               });
-              // Add the widget to the top-right corner of the view
-              // view.ui.add(sketch, {
-
-              //   sketch_container
-              //   position: "top-right"
-              // });
-              // Listen to sketch widget's create event.
-              sketch.on("create", function (event) {
-                // check if the create event's state has changed to complete indicating
-                // the graphic create operation is completed.
-                if (event.state === "complete") {
-                  // remove the graphic from the layer. Sketch adds
-                  // the completed graphic to the layer by default.
-                  polygonGraphicsLayer.remove(event.graphic);
-
-                  // use the graphic.geometry to query features that intersect it
-                  selectFeatures(event.graphic.geometry);
+              sketch.on('create', (event) => {
+                if(event.state === 'start') {
+                  detectionParameters.geometry = null;
+                  detectionLayer.removeAll();
                 }
-
-                debugger
-                // const geojson = event.detail.geojson;
-                // detectionLayer.removeAll();
-
-
-                // geojson.features.forEach(feature => {
-                //   const point = new Point({
-                //     longitude: feature.geometry.coordinates[0],
-                //     latitude: feature.geometry.coordinates[1]
-                //   });
-
-                //   const graphic = new Graphic({
-                //     geometry: point,
-                //     symbol: {
-                //       type: "text",
-                //       color: "red",
-                //       text: feature.properties.label || "unknown",
-                //       font: {
-                //         size: 12,
-                //         family: "sans-serif"
-                //       },
-                //       haloColor: "white",
-                //       haloSize: "1px"
-                //     }
-                //   });
-
-                //   detectionLayer.add(graphic);
-                // });
+                if(event.state === 'complete') {
+                  detectionParameters.geometry = event.graphic.geometry;
+                }
               });
-            } else {
+
+
+           } else {
               objectDetectionPanel.hide();
               view.ui.remove(sketch);
-              sketchLayer.removeAll();
-
+              detectionLayer.removeAll();
+              detectionParameters.geometry = null;
             }
 
           });

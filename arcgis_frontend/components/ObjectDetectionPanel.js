@@ -1,7 +1,7 @@
 class ObjectDetectionPanel {
-  constructor(view, sketchLayer) {
+  constructor(view, detectionParameters) {
     this.view = view;
-    this.sketchLayer = sketchLayer;
+    this.detectionParameters = detectionParameters;
     this.textPrompt = '';
     this.isLoading = false;
     this.bbox = null;
@@ -33,10 +33,10 @@ class ObjectDetectionPanel {
         
         <div class="input-group">
           <label for="point-position">Point Position</label>
-          <select id="point-position">
+          <select id="point-position" disabled>
             <option value="top-right">Top Right</option>
             <option value="top-left">Top Left</option>
-            <option value="bottom-right">Bottom Right</option>
+            <option value="bottom-right" selected>Bottom Right</option>
             <option value="bottom-left">Bottom Left</option>
           </select>
         </div>
@@ -56,7 +56,7 @@ class ObjectDetectionPanel {
           
         </div>
         
-        <button id="detect-btn" class="detect-button" disabled>
+        <button id="detect-btn" class="detect-button">
           Detect Objects
         </button>
         
@@ -209,7 +209,6 @@ class ObjectDetectionPanel {
     const textPromptInput = this.panel.querySelector('#text-prompt');
     textPromptInput.addEventListener('input', (e) => {
       this.textPrompt = e.target.value;
-      this.updateDetectButton();
     });
 
     // Point position select
@@ -247,6 +246,8 @@ class ObjectDetectionPanel {
   hide() {
     this.panel.style.display = 'none';
     this.panelVisible = false;
+    this.detectionParameters.geometry = null;
+    this.detectionParameters.layer.removeAll();
     document.querySelector('#toolButton').textContent = "Activate Object Detection Tool";
     document.querySelector('#sketch_container').innerHTML = '';
   }
@@ -259,24 +260,15 @@ class ObjectDetectionPanel {
     }
   }
 
-  setBbox(bbox) {
-    this.bbox = bbox;
-    this.updateDetectButton();
-  }
-
-  updateDetectButton() {
-    const detectButton = this.panel.querySelector('#detect-btn');
-    detectButton.disabled = !this.bbox || !this.textPrompt || this.isLoading;
-  }
-
   async handleDetect() {
-    if (!this.bbox || !this.textPrompt) {
+    this.bbox = this.detectionParameters?.geometry?.extent;
+    if (!this.zoomLevel || !this.textPrompt || !this.bbox) {
       alert('Please draw a rectangle and enter detection parameters');
       return;
     }
 
     const requestBody = {
-      bounding_box: this.bbox,
+      bounding_box: bbox,
       text_prompt: this.textPrompt,
       zoom_level: this.zoomLevel,
       box_threshold: 0.24,
@@ -289,7 +281,6 @@ class ObjectDetectionPanel {
     const detectButton = this.panel.querySelector('#detect-btn');
     detectButton.classList.add('loading');
     this.isLoading = true;
-    this.updateDetectButton();
 
     try {
       const response = await fetch('http://localhost:8001/api/v1/predict', {
@@ -321,7 +312,6 @@ class ObjectDetectionPanel {
     } finally {
       detectButton.classList.remove('loading');
       this.isLoading = false;
-      this.updateDetectButton();
     }
   }
 
