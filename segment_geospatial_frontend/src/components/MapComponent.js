@@ -80,8 +80,13 @@ const MapComponent = ({ center, zoom }) => {
         }
       });
 
-      setGeoJsonData(response.data.geojson);
-      console.log(response.data);
+      if (response.data.error) {
+        throw new Error(response.data.error);
+      }else if(response.data.geojson){
+        setGeoJsonData(response.data.geojson);
+      }else{
+        throw new Error('No geojson data');
+      }
     } catch (error) {
       console.error('Error during detection:', error);
       const errorMessage = error.response?.data?.error || error.message || 'Server error';
