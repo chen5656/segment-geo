@@ -37,7 +37,7 @@ function App() {
       <CssBaseline />
       <div className="App">
         <header className="App-header">
-          <h1>Tree Detection</h1>
+          <h1>Map Object Detection</h1>
         </header>
         <main>
           <MapComponent
