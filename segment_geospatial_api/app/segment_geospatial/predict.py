@@ -1,4 +1,4 @@
-from samgeo import tms_to_geotiff, raster_to_geojson
+from samgeo import tms_to_geotiff, raster_to_geojson, raster_to_vector
 from samgeo.text_sam import LangSAM
 import uuid
 import json
@@ -52,9 +52,9 @@ class SegmentationPredictor:
                 - "vit_b"
                 SAM 2 models:
                 - "sam2-hiera-tiny"
-                - "sam2-hiera-small"
+                - "sam2-hiera-small" (default)
                 - "sam2-hiera-base-plus"
-                - "sam2-hiera-large" (default)
+                - "sam2-hiera-large" 
         
         Raises:
             ValueError: If invalid model_type is provided.
@@ -284,11 +284,12 @@ class SegmentationPredictor:
             # Convert to GeoJSON
             logger.info("Converting to GeoJSON...")
             try:
-                raster_to_geojson(
-                    output_image,
-                    output_geojson,
-                    None      # simplify_tolerance
-                )
+                raster_to_vector(output_image, output_geojson, None)
+                # raster_to_geojson(
+                #     output_image,
+                #     output_geojson,
+                #     None      # simplify_tolerance
+                # )
                 logger.success("Converted to GeoJSON successfully")
             except Exception as e:
                 logger.error(f"Failed to convert to GeoJSON: {str(e)}", exc_info=True)
