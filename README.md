@@ -8,13 +8,13 @@ Clone this repository to your computer
 # run without docker
 
 ## First time user
-### run npm install for frontend
 ```
+// run npm install for frontend
 cd segment_geospatial_frontend
 npm install
 ```
-### create conda environment with environment.yml and activate it
 ```
+// run conda install for backend
 cd segment_geospatial_api
 conda env create -f environment.yml
 conda activate geo_env
