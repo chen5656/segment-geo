@@ -172,14 +172,14 @@ const MapComponent = ({ center, zoom }) => {
             <BaseLayer checked name="ESRI Satellite">
               <TileLayer
                 url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                maxZoom={19}
+                maxZoom={20}
                 attribution='&copy; <a href="https://www.esri.com/en-us/home">Esri</a>'
               />
             </BaseLayer>
             <BaseLayer name="ESRI Topographic">
               <TileLayer
                 url="https://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
-                maxZoom={19}
+                maxZoom={20}
                 attribution='&copy; <a href="https://www.esri.com/en-us/home">Esri</a>'
               />
             </BaseLayer>
@@ -193,7 +193,7 @@ const MapComponent = ({ center, zoom }) => {
             <BaseLayer name="OpenStreetMap">
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                maxZoom={19}
+                maxZoom={20}
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               />
             </BaseLayer>

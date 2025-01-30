@@ -122,3 +122,9 @@ packages/car_evaluation_model/car_evaluation_model/data/raw/*.data
 .my_data/
 *.tif
 *.geojson
+*.cpg
+*.dbf
+*.prj
+*.shp
+*.shx
+*.tif

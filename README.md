@@ -2,23 +2,34 @@ Clone this repository to your computer
 
 # make a copy of .env_example and rename it to .env, and update its value.
 
-# run npm install for frontend
+# run with docker
+## right click on file docker-compose.dev.yml and select "Compose Up"
+
+# run without docker
+
+## First time user
+### run npm install for frontend
+```
 cd segment_geospatial_frontend
 npm install
-
-# create conda environment with environment.yml
+```
+### create conda environment with environment.yml and activate it
+```
+cd segment_geospatial_api
 conda env create -f environment.yml
-
-# activate conda environment
 conda activate geo_env
+```
 
-# start api
+## start api and frontend
+Open a new terminal and run the following commands:
+```
 cd segment_geospatial_api
 python -m app.main
-
-# start frontend
+```
+```
 cd segment_geospatial_frontend
 npm run start
+```
 
 # Citations
 

@@ -215,7 +215,7 @@ class SegmentationPredictor:
         
         # Check number of tiles
         total_tiles = self.count_tiles(bounding_box, zoom_level)
-        if total_tiles > 100:  
+        if total_tiles > 300:  
             logger.error(f"Too many tiles requested: {total_tiles}")
             return {"error": f"Area too large for zoom level {zoom_level}. Please reduce zoom level or area size."}
         else:
