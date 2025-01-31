@@ -199,9 +199,12 @@
       "esri/layers/ImageryLayer",
       "esri/geometry/Point",
       "esri/layers/TileLayer",
-      "esri/widgets/Sketch"
-    ], function (esriConfig, Map, MapView, FeatureLayer, Extent, urlUtils, LayerList, Editor, MapImageLayer, webMercatorUtils, Search, Graphic, projection, GraphicsLayer, ImageryLayer, Point, TileLayer, Sketch) {
+      "esri/widgets/Sketch",
+      "esri/layers/GraphicsLayer",
+      "esri/Graphic"
+    ], function (esriConfig, Map, MapView, FeatureLayer, Extent, urlUtils, LayerList, Editor, MapImageLayer, webMercatorUtils, Search, Graphic, projection, GraphicsLayer, ImageryLayer, Point, TileLayer, Sketch, GraphicsLayer, Graphic) {
       hideVexcelMap();
+
       const urlParams = new URLSearchParams(window.location.search);
       const jobId = urlParams.get('jobId');
       const token = sessionStorage.getItem("authToken");
@@ -241,6 +244,7 @@
       toolButton.style.zIndex = "99";
       document.body.appendChild(toolButton);
 
+      // Object Detection Panel
       import('./components/ObjectDetectionPanel.js').then(module => {
         let objectDetectionPanel;
         let detectionLayer = new GraphicsLayer();
@@ -250,7 +254,7 @@
         map.add(detectionLayer);
 
 
-        objectDetectionPanel = new module.ObjectDetectionPanel(view, detectionParameters, sendRequest);
+        objectDetectionPanel = new module.ObjectDetectionPanel(view, detectionParameters, sendObjectDetectionRequest);
 
         // Update tool button click handler
         toolButton.addEventListener("click", () => {
@@ -293,7 +297,7 @@
 
         });
 
-        
+
       });
 
 
@@ -324,8 +328,54 @@
         },
       });
 
-      
-      async function sendRequest(requestBody){
+      function displayGeojsonData(geoJson) {
+        const pointSymbol = {
+          type: "simple-marker",  // autocasts as new SimpleMarkerSymbol()
+          style: "square",
+          color: "blue",
+          size: "4px",  // pixels
+          outline: {  // autocasts as new SimpleLineSymbol()
+            color: [255, 255, 0],
+            width: 3  // points
+          }
+        };
+        const polygonSymbol = {
+          type: "simple-fill",  // autocasts as new SimpleFillSymbol()
+          color: [51, 51, 204, 0.9],
+          style: "solid",
+          outline: {  // autocasts as new SimpleLineSymbol()
+            color: "white",
+            width: 1
+          }
+        };
+
+        const graphicsLayer = new GraphicsLayer();
+        map.add(graphicsLayer);
+        // Step 5: Parse the GeoJSON and create graphics
+        geoJson.features.forEach(feature => {
+          const polygon = {
+            type: "polygon", // autocasts as new Polygon()
+            rings: feature.geometry.coordinates[0]
+          };
+
+          const graphic = new Graphic({
+            geometry: polygon,
+            symbol: polygonSymbol,
+            attributes: feature.properties,
+            popupTemplate: {
+              title: "{value}",
+              content: "Polygon Area: {value}"
+            }
+
+          });
+
+          graphicsLayer.add(graphic);
+        });
+
+      }
+
+
+      async function sendObjectDetectionRequest(requestBody) {
 
         const myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
@@ -340,11 +390,13 @@
         };
 
         fetch("http://localhost:8001/api/v1/predict", requestOptions)
-          .then((response) => response.text())
-          .then((result) => console.log(result))
+          .then((response) => response.json())
+          .then((geojson) => {
+            displayGeojsonData(geojson)
+          })
           .catch((error) => console.error(error));
       }
-    
+
       async function object_detection(event) {
         if (!toolActive) return;
         const imageSize = 300;

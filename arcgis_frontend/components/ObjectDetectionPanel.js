@@ -61,7 +61,7 @@ function convertBoundingBoxToGeographic(bbox) {
 }
 
 class ObjectDetectionPanel {
-  constructor(view, detectionParameters, sendRequest) {
+  constructor(view, detectionParameters, sendObjectDetectionRequest) {
     this.view = view;
     this.detectionParameters = detectionParameters;
     this.textPrompt = '';
@@ -69,7 +69,7 @@ class ObjectDetectionPanel {
     this.zoomLevel = view.zoom;
     this.geoJsonData = null;
     this.panelVisible = false;
-    this.sendRequest = sendRequest;
+    this.sendRequest = sendObjectDetectionRequest;
     this.createPanel();
     this.setupEventListeners();
   }
@@ -310,49 +310,36 @@ class ObjectDetectionPanel {
     }
   }
 
-  async sendRequest(requestBody) {
-
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
-    
-    const raw = JSON.stringify(requestBody);
-    
-    const requestOptions = {
-      method: "POST",
-      headers: myHeaders,
-      body: raw,
-      redirect: "follow"
-    };
-    
-    fetch("http://localhost:8001/api/v1/predict", requestOptions)
-      .then((response) => response.text())
-      .then((result) => console.log(result))
-      .catch((error) => console.error(error));
-  }
-
   async handleDetect() {
     //bounding_box (list): Coordinates [west, south, east, north]
     const bbox = this.detectionParameters?.geometry?.extent;
-    console.log('bbox', bbox);
     if (!this.zoomLevel || !this.textPrompt || !bbox) {
       alert('Please draw a rectangle and enter detection parameters');
       return;
     }
-
-    const boundingBox = convertBoundingBoxToGeographic(extentToBoundingBox(bbox));
-
-    const requestBody = {
-      "bounding_box": boundingBox,
-      "text_prompt": this.textPrompt,
-      "zoom_level": this.zoomLevel,
-      "box_threshold": 0.24,
-      "text_threshold": 0.24,
-    };
-
-    const detectButton = this.panel.querySelector('#detect-btn');
-    detectButton.classList.add('loading');
-
-    this.sendRequest(requestBody);
+    try {
+      detectButton.classList.add('loading');
+      detectButton.disabled = true;
+      const boundingBox = convertBoundingBoxToGeographic(extentToBoundingBox(bbox));
+  
+      const requestBody = {
+        "bounding_box": boundingBox,
+        "text_prompt": this.textPrompt,
+        "zoom_level": this.zoomLevel,
+        "box_threshold": 0.24,
+        "text_threshold": 0.24,
+      };
+  
+      const detectButton = this.panel.querySelector('#detect-btn');
+  
+      await this.sendRequest(requestBody);
+      
+    } catch (error) {
+      throw      
+    } finally{
+      detectButton.classList.remove('loading');
+      detectButton.disabled = false;
+    }
   }
 
 }
