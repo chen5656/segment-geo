@@ -292,8 +292,8 @@ class SegmentationPredictor:
                 # )
                 logger.success("Converted to GeoJSON successfully")
             except Exception as e:
-                logger.error(f"Failed to convert to GeoJSON: {str(e)}", exc_info=True)
-                return {"error": f"Failed to convert to GeoJSON: {str(e)}"}
+                logger.error(f"Failed to convert to GeoJSON: {str(e)}. There may be no {text_prompt} in the specified area", exc_info=True)
+                return {"error": f"Failed to convert to GeoJSON: {str(e)}. There may be no {text_prompt} in the specified area"}
             
             # Read GeoJSON content
             logger.info("Reading GeoJSON content...")

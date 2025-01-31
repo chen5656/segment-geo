@@ -32,7 +32,6 @@ async def predict(request: schemas.PredictionRequest):
             box_threshold=request.box_threshold,
             text_threshold=request.text_threshold,
         )
-
         if result.get("errors") is not None:
             logger.warning(f"Prediction validation error: {result.get('errors')}")
             return JSONResponse(
@@ -41,7 +40,11 @@ async def predict(request: schemas.PredictionRequest):
             )
 
         logger.info(f"Prediction results: {result.get('predictions')}")
-        return result  # FastAPI will automatically convert this to JSONResponse
+        
+        return JSONResponse(
+            status_code=200,
+            content=result.get("geojson")
+        )
 
     except Exception as e:
         logger.error(f"Error during prediction: {str(e)}")

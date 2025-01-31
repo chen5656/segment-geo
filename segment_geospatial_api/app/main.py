@@ -19,13 +19,12 @@ app = FastAPI(
 # Remove the duplicate CORS middleware and keep only this one
 app.add_middleware(
     CORSMiddleware,
-    # allow_origins=["http://localhost:3000"],
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["GET", "POST", "OPTIONS"],  # Explicitly list allowed methods
+    allow_origins=["*"],  # 在生产环境中应该指定具体的域名
+    allow_credentials=True,  # 允许携带凭证
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["*"],
-    max_age=600,  # Cache preflight requests for 10 minutes
+    max_age=600,
 )
 
 root_router = APIRouter()
