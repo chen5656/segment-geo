@@ -7,21 +7,21 @@
 function extentToBoundingBox(extent) {
   // Input validation
   if (!extent || typeof extent !== 'object') {
-      throw new Error('Invalid extent object');
+    throw new Error('Invalid extent object');
   }
 
   // Check if required properties exist
-  if (!('xmin' in extent) || !('ymin' in extent) || 
-      !('xmax' in extent) || !('ymax' in extent)) {
-      throw new Error('Extent object missing required properties');
+  if (!('xmin' in extent) || !('ymin' in extent) ||
+    !('xmax' in extent) || !('ymax' in extent)) {
+    throw new Error('Extent object missing required properties');
   }
 
   // Convert to bounding box format [west, south, east, north]
   return [
-      extent.xmin,  // west
-      extent.ymin,  // south
-      extent.xmax,  // east
-      extent.ymax   // north
+    extent.xmin,  // west
+    extent.ymin,  // south
+    extent.xmax,  // east
+    extent.ymax   // north
   ];
 }
 
@@ -34,13 +34,13 @@ function extentToBoundingBox(extent) {
 function webMercatorToGeographic(x, y) {
   // Earth's radius in meters
   const EARTH_RADIUS = 6378137;
-  
+
   // Convert X coordinate to longitude
   const longitude = (x / EARTH_RADIUS) * (180 / Math.PI);
-  
+
   // Convert Y coordinate to latitude
   const latitude = (Math.PI / 2 - 2 * Math.atan(Math.exp(-y / EARTH_RADIUS))) * (180 / Math.PI);
-  
+
   return [longitude, latitude];
 }
 
@@ -52,25 +52,24 @@ function webMercatorToGeographic(x, y) {
 function convertBoundingBoxToGeographic(bbox) {
   // Convert southwest corner
   const [westLong, southLat] = webMercatorToGeographic(bbox[0], bbox[1]);
-  
+
   // Convert northeast corner
   const [eastLong, northLat] = webMercatorToGeographic(bbox[2], bbox[3]);
-  
+
   // Return in [west, south, east, north] format
   return [westLong, southLat, eastLong, northLat];
 }
 
 class ObjectDetectionPanel {
-  constructor(view, detectionParameters) {
+  constructor(view, detectionParameters, sendRequest) {
     this.view = view;
     this.detectionParameters = detectionParameters;
     this.textPrompt = '';
-    this.isLoading = false;
     this.pointPosition = 'bottom-right';
     this.zoomLevel = view.zoom;
     this.geoJsonData = null;
     this.panelVisible = false;
-    
+    this.sendRequest = sendRequest;
     this.createPanel();
     this.setupEventListeners();
   }
@@ -79,11 +78,11 @@ class ObjectDetectionPanel {
     this.panel = document.createElement('div');
     this.panel.className = 'object-detection-panel';
     this.panel.style.display = 'none';
-    
+
     this.panel.innerHTML = `
       <div class="panel-header">
         <h3>Object Detection</h3>
-        <button class="close-btn">×</button>
+        <button type="button" class="close-btn">×</button>
       </div>
       <div class="panel-content">
         <div class="input-group">
@@ -104,9 +103,9 @@ class ObjectDetectionPanel {
         <div class="input-group">
           <label for="zoom-level">Zoom Level</label>
           <select id="zoom-level">
-            ${[15, 16, 17, 18, 19, 20, 21, 22].map(zoom => 
-              `<option value="${zoom}">${zoom}</option>`
-            ).join('')}
+            ${[15, 16, 17, 18, 19, 20, 21, 22].map(zoom =>
+      `<option value="${zoom}">${zoom}</option>`
+    ).join('')}
           </select>
         </div>
         <div class="instruction">
@@ -116,17 +115,13 @@ class ObjectDetectionPanel {
           
         </div>
         
-        <button id="detect-btn" class="detect-button">
+        <button type="button" id="detect-btn" class="detect-button">
           Detect Objects
         </button>
-        
-        <div id="request-info" style="display: none">
-          <button class="toggle-request-btn">Show Request</button>
-          <pre class="request-body" style="display: none"></pre>
-        </div>
+
       </div>
     `;
-    
+
     document.body.appendChild(this.panel);
     this.addStyles();
   }
@@ -262,6 +257,7 @@ class ObjectDetectionPanel {
   setupEventListeners() {
     // Close button
     this.panel.querySelector('.close-btn').addEventListener('click', () => {
+      e.preventDefault();
       this.hide();
     });
 
@@ -291,14 +287,6 @@ class ObjectDetectionPanel {
       this.handleDetect();
     });
 
-    // Toggle request info
-    const toggleRequestBtn = this.panel.querySelector('.toggle-request-btn');
-    toggleRequestBtn.addEventListener('click', () => {
-      const requestBody = this.panel.querySelector('.request-body');
-      const isHidden = requestBody.style.display === 'none';
-      requestBody.style.display = isHidden ? 'block' : 'none';
-      toggleRequestBtn.textContent = isHidden ? 'Hide Request' : 'Show Request';
-    });
   }
 
   show() {
@@ -323,6 +311,26 @@ class ObjectDetectionPanel {
     }
   }
 
+  async sendRequest(requestBody) {
+
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+    
+    const raw = JSON.stringify(requestBody);
+    
+    const requestOptions = {
+      method: "POST",
+      headers: myHeaders,
+      body: raw,
+      redirect: "follow"
+    };
+    
+    fetch("http://localhost:8001/api/v1/predict", requestOptions)
+      .then((response) => response.text())
+      .then((result) => console.log(result))
+      .catch((error) => console.error(error));
+  }
+
   async handleDetect() {
     //bounding_box (list): Coordinates [west, south, east, north]
     const bbox = this.detectionParameters?.geometry?.extent;
@@ -341,40 +349,11 @@ class ObjectDetectionPanel {
       "box_threshold": 0.24,
       "text_threshold": 0.24,
     };
-    
+
     const detectButton = this.panel.querySelector('#detect-btn');
     detectButton.classList.add('loading');
-    this.isLoading = true;
-    console.log('requestBody', requestBody);
 
-    try {
-      const response = await fetch('http://localhost:8001/api/v1/predict', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-      });
-
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
-      } else if (data.geojson) {
-        this.geoJsonData = data.geojson;
-        // Emit event for map to handle
-        debugger
-      } else {
-        throw new Error('No geojson data');
-      }
-    } catch (error) {
-      console.error('Error during detection:', error);
-      const errorMessage = error.response?.data?.error || error.message || 'Server error';
-      alert(`Error: ${errorMessage}`);
-    } finally {
-      detectButton.classList.remove('loading');
-      this.isLoading = false;
-    }
+    this.sendRequest(requestBody);
   }
 
 }

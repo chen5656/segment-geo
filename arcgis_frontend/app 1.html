@@ -250,7 +250,7 @@
         map.add(detectionLayer);
 
 
-        objectDetectionPanel = new module.ObjectDetectionPanel(view, detectionParameters);
+        objectDetectionPanel = new module.ObjectDetectionPanel(view, detectionParameters, sendRequest);
 
         // Update tool button click handler
         toolButton.addEventListener("click", () => {
@@ -323,6 +323,28 @@
           },
         },
       });
+
+      
+      async function sendRequest(requestBody){
+
+        const myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+
+        const raw = JSON.stringify(requestBody);
+
+        const requestOptions = {
+          method: "POST",
+          headers: myHeaders,
+          body: raw,
+          redirect: "follow"
+        };
+
+        fetch("http://localhost:8001/api/v1/predict", requestOptions)
+          .then((response) => response.text())
+          .then((result) => console.log(result))
+          .catch((error) => console.error(error));
+      }
+    
       async function object_detection(event) {
         if (!toolActive) return;
         const imageSize = 300;
