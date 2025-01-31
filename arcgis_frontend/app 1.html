@@ -389,12 +389,12 @@
           redirect: "follow"
         };
 
-        fetch("http://localhost:8001/api/v1/predict", requestOptions)
-          .then((response) => response.json())
-          .then((geojson) => {
-            displayGeojsonData(geojson)
-          })
-          .catch((error) => console.error(error));
+        const response = await fetch("http://localhost:8001/api/v1/predict", requestOptions);
+        if (!response.ok) {
+          throw new Error("Network response was not ok while sending object detection request.");
+        }
+        const geojson = await response.json();
+        displayGeojsonData(geojson);
       }
 
       async function object_detection(event) {

@@ -90,7 +90,7 @@ class ObjectDetectionPanel {
           <input type="text" id="text-prompt" placeholder="e.g., poles, trees, buildings">
         </div>
         
-        <div class="input-group">
+        <div class="input-group hide">
           <label for="point-position">Point Position</label>
           <select id="point-position" disabled>
             <option value="top-right">Top Right</option>
@@ -129,6 +129,9 @@ class ObjectDetectionPanel {
   addStyles() {
     const style = document.createElement('style');
     style.textContent = `
+      .hide{
+        display: none;
+      }
       .object-detection-panel {
         position: absolute;
         top: 10px;
@@ -178,7 +181,7 @@ class ObjectDetectionPanel {
       
       .input-group input,
       .input-group select {
-        width: 100%;
+        width: 80%;
         padding: 8px;
         border: 1px solid #ddd;
         border-radius: 4px;
@@ -317,9 +320,11 @@ class ObjectDetectionPanel {
       alert('Please draw a rectangle and enter detection parameters');
       return;
     }
+    const detectButton = this.panel.querySelector('#detect-btn');
     try {
       detectButton.classList.add('loading');
       detectButton.disabled = true;
+
       const boundingBox = convertBoundingBoxToGeographic(extentToBoundingBox(bbox));
   
       const requestBody = {
@@ -328,14 +333,12 @@ class ObjectDetectionPanel {
         "zoom_level": this.zoomLevel,
         "box_threshold": 0.24,
         "text_threshold": 0.24,
-      };
-  
-      const detectButton = this.panel.querySelector('#detect-btn');
+      };  
   
       await this.sendRequest(requestBody);
       
     } catch (error) {
-      throw      
+      throw error;      
     } finally{
       detectButton.classList.remove('loading');
       detectButton.disabled = false;
