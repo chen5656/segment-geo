@@ -19,7 +19,8 @@ app = FastAPI(
 # Remove the duplicate CORS middleware and keep only this one
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    # allow_origins=["http://localhost:3000"],
+    allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],  # Explicitly list allowed methods
     allow_headers=["*"],

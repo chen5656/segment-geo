@@ -1,14 +1,74 @@
+
+/**
+ * Converts an Esri Extent object to a bounding box array
+ * @param {Object} extent - Esri Extent object containing xmin, ymin, xmax, ymax
+ * @returns {Array} Bounding box array in [west, south, east, north] format
+ */
+function extentToBoundingBox(extent) {
+  // Input validation
+  if (!extent || typeof extent !== 'object') {
+      throw new Error('Invalid extent object');
+  }
+
+  // Check if required properties exist
+  if (!('xmin' in extent) || !('ymin' in extent) || 
+      !('xmax' in extent) || !('ymax' in extent)) {
+      throw new Error('Extent object missing required properties');
+  }
+
+  // Convert to bounding box format [west, south, east, north]
+  return [
+      extent.xmin,  // west
+      extent.ymin,  // south
+      extent.xmax,  // east
+      extent.ymax   // north
+  ];
+}
+
+/**
+ * Converts Web Mercator coordinates to Geographic coordinates (lat/long)
+ * @param {number} x - Web Mercator X coordinate
+ * @param {number} y - Web Mercator Y coordinate
+ * @returns {Array} Array containing [longitude, latitude]
+ */
+function webMercatorToGeographic(x, y) {
+  // Earth's radius in meters
+  const EARTH_RADIUS = 6378137;
+  
+  // Convert X coordinate to longitude
+  const longitude = (x / EARTH_RADIUS) * (180 / Math.PI);
+  
+  // Convert Y coordinate to latitude
+  const latitude = (Math.PI / 2 - 2 * Math.atan(Math.exp(-y / EARTH_RADIUS))) * (180 / Math.PI);
+  
+  return [longitude, latitude];
+}
+
+/**
+* Converts Web Mercator bounding box to Geographic bounding box
+* @param {Array} bbox - Bounding box in Web Mercator [west, south, east, north]
+* @returns {Array} Bounding box in Geographic coordinates [west, south, east, north]
+*/
+function convertBoundingBoxToGeographic(bbox) {
+  // Convert southwest corner
+  const [westLong, southLat] = webMercatorToGeographic(bbox[0], bbox[1]);
+  
+  // Convert northeast corner
+  const [eastLong, northLat] = webMercatorToGeographic(bbox[2], bbox[3]);
+  
+  // Return in [west, south, east, north] format
+  return [westLong, southLat, eastLong, northLat];
+}
+
 class ObjectDetectionPanel {
   constructor(view, detectionParameters) {
     this.view = view;
     this.detectionParameters = detectionParameters;
     this.textPrompt = '';
     this.isLoading = false;
-    this.bbox = null;
     this.pointPosition = 'bottom-right';
     this.zoomLevel = view.zoom;
     this.geoJsonData = null;
-    this.lastRequestBody = null;
     this.panelVisible = false;
     
     this.createPanel();
@@ -261,26 +321,28 @@ class ObjectDetectionPanel {
   }
 
   async handleDetect() {
-    this.bbox = this.detectionParameters?.geometry?.extent;
-    if (!this.zoomLevel || !this.textPrompt || !this.bbox) {
+    //bounding_box (list): Coordinates [west, south, east, north]
+    const bbox = this.detectionParameters?.geometry?.extent;
+    console.log('bbox', bbox);
+    if (!this.zoomLevel || !this.textPrompt || !bbox) {
       alert('Please draw a rectangle and enter detection parameters');
       return;
     }
 
-    const requestBody = {
-      bounding_box: bbox,
-      text_prompt: this.textPrompt,
-      zoom_level: this.zoomLevel,
-      box_threshold: 0.24,
-      text_threshold: 0.24,
-    };
+    const boundingBox = convertBoundingBoxToGeographic(extentToBoundingBox(bbox));
 
-    this.lastRequestBody = requestBody;
-    this.updateRequestInfo(requestBody);
+    const requestBody = {
+      "bounding_box": boundingBox,
+      "text_prompt": this.textPrompt,
+      "zoom_level": this.zoomLevel,
+      "box_threshold": 0.24,
+      "text_threshold": 0.24,
+    };
     
     const detectButton = this.panel.querySelector('#detect-btn');
     detectButton.classList.add('loading');
     this.isLoading = true;
+    console.log('requestBody', requestBody);
 
     try {
       const response = await fetch('http://localhost:8001/api/v1/predict', {
@@ -298,10 +360,7 @@ class ObjectDetectionPanel {
       } else if (data.geojson) {
         this.geoJsonData = data.geojson;
         // Emit event for map to handle
-        const event = new CustomEvent('detection-complete', {
-          detail: { geojson: data.geojson }
-        });
-        document.dispatchEvent(event);
+        debugger
       } else {
         throw new Error('No geojson data');
       }
@@ -315,12 +374,6 @@ class ObjectDetectionPanel {
     }
   }
 
-  updateRequestInfo(requestBody) {
-    const requestInfo = this.panel.querySelector('#request-info');
-    const requestBodyPre = this.panel.querySelector('.request-body');
-    requestInfo.style.display = 'block';
-    requestBodyPre.textContent = JSON.stringify(requestBody, null, 2);
-  }
 }
 
 // Export the class
