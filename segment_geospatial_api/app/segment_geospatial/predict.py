@@ -29,7 +29,7 @@ class SegmentationPredictor:
     """Segmentation predictor class."""
     _instance = None
     _initialized = False
-    DEFAULT_MODEL_TYPE = "sam2-hiera-small"
+    DEFAULT_MODEL_TYPE = "sam2-hiera-large"
     
     def __new__(cls):
         """Create a new instance if one doesn't exist."""
@@ -52,9 +52,9 @@ class SegmentationPredictor:
                 - "vit_b"
                 SAM 2 models:
                 - "sam2-hiera-tiny"
-                - "sam2-hiera-small" (default)
+                - "sam2-hiera-small" 
                 - "sam2-hiera-base-plus"
-                - "sam2-hiera-large" 
+                - "sam2-hiera-large" (default)
         
         Raises:
             ValueError: If invalid model_type is provided.
@@ -314,7 +314,7 @@ class SegmentationPredictor:
                 return {
                     "errors": None,
                     "version": "1.0",
-                    "predictions": f'Successfully found {geojson_count} features',
+                    "predictions": f"Successfully found {geojson_count} features",
                     "geojson": transformed_geojson
                 }
                 

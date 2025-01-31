@@ -10,7 +10,7 @@ class ErrorResponse(BaseModel):
 class PredictionResults(BaseModel):
     errors: Optional[Any]
     version: str
-    predictions: Optional[List[int]]
+    predictions: Optional[str]
     geojson: Optional[dict]
 
 
