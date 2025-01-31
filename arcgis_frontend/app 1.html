@@ -241,60 +241,61 @@
       toolButton.style.zIndex = "99";
       document.body.appendChild(toolButton);
 
-      let objectDetectionPanel;
-      let detectionLayer = new GraphicsLayer();      
-      let detectionParameters = {
-        layer: detectionLayer,
-      };
-      map.add(detectionLayer);
-
-      view.when(() => {
-        import('./components/ObjectDetectionPanel.js').then(module => {
-          objectDetectionPanel = new module.ObjectDetectionPanel(view, detectionParameters);
-
-          // Update tool button click handler
-          toolButton.addEventListener("click", () => {
-            let toolActive = (toolButton.textContent === "Activate Object Detection Tool");
-            toolButton.textContent = toolActive ? "Deactivate Tool" : "Activate Object Detection Tool";
-            let sketch;
-            if (toolActive) {
-              objectDetectionPanel.show();
-              sketch = new Sketch({
-                layer: detectionLayer,
-                view: view,
-                container: "sketch_container",
-                availableCreateTools: ["rectangle"],
-                visibleElements: {
-                  selectionTools: {
-                    "lasso-selection": false,
-                    "rectangle-selection": false,
-                  },
-                  settingsMenu: false,
-                  undoRedoMenu: false,
-                },                
-              });
-              sketch.on('create', (event) => {
-                if(event.state === 'start') {
-                  detectionParameters.geometry = null;
-                  detectionLayer.removeAll();
-                }
-                if(event.state === 'complete') {
-                  detectionParameters.geometry = event.graphic.geometry;
-                }
-              });
+      import('./components/ObjectDetectionPanel.js').then(module => {
+        let objectDetectionPanel;
+        let detectionLayer = new GraphicsLayer();
+        let detectionParameters = {
+          layer: detectionLayer,
+        };
+        map.add(detectionLayer);
 
 
-           } else {
-              objectDetectionPanel.hide();
-              view.ui.remove(sketch);
-              detectionLayer.removeAll();
-              detectionParameters.geometry = null;
-            }
+        objectDetectionPanel = new module.ObjectDetectionPanel(view, detectionParameters);
 
-          });
+        // Update tool button click handler
+        toolButton.addEventListener("click", () => {
+          let toolActive = (toolButton.textContent === "Activate Object Detection Tool");
+          toolButton.textContent = toolActive ? "Deactivate Tool" : "Activate Object Detection Tool";
+          let sketch;
+          if (toolActive) {
+            objectDetectionPanel.show();
+            sketch = new Sketch({
+              layer: detectionLayer,
+              view: view,
+              container: "sketch_container",
+              availableCreateTools: ["rectangle"],
+              visibleElements: {
+                selectionTools: {
+                  "lasso-selection": false,
+                  "rectangle-selection": false,
+                },
+                settingsMenu: false,
+                undoRedoMenu: false,
+              },
+            });
+            sketch.on('create', (event) => {
+              if (event.state === 'start') {
+                detectionParameters.geometry = null;
+                detectionLayer.removeAll();
+              }
+              if (event.state === 'complete') {
+                detectionParameters.geometry = event.graphic.geometry;
+              }
+            });
+
+
+          } else {
+            objectDetectionPanel.hide();
+            view.ui.remove(sketch);
+            detectionLayer.removeAll();
+            detectionParameters.geometry = null;
+          }
 
         });
+
+        
       });
+
 
       const sectionsLayer = new FeatureLayer({
         url: 'https://services3.arcgis.com/hm7m5CL2bomXg0YW/ArcGIS/rest/services/drone_poc_Arcgispro_WFL1/FeatureServer/6'

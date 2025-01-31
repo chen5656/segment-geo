@@ -308,12 +308,13 @@ class SegmentationPredictor:
                 # Transform coordinates to lat/long
                 logger.info("Transforming coordinates to WGS84...")
                 transformed_geojson = self.transform_coordinates(geojson_content)
+                geojson_count = len(transformed_geojson.get('features', []))
                 
-                logger.success(f"Successfully found {len(transformed_geojson.get('features', []))} features")
+                logger.success(f"Successfully found {geojson_count} features")
                 return {
                     "errors": None,
                     "version": "1.0",
-                    "predictions": None,
+                    "predictions": f'Successfully found {geojson_count} features',
                     "geojson": transformed_geojson
                 }
                 

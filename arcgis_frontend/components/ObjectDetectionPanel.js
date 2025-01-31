@@ -286,7 +286,10 @@ class ObjectDetectionPanel {
 
     // Detect button
     const detectButton = this.panel.querySelector('#detect-btn');
-    detectButton.addEventListener('click', () => this.handleDetect());
+    detectButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.handleDetect();
+    });
 
     // Toggle request info
     const toggleRequestBtn = this.panel.querySelector('.toggle-request-btn');
