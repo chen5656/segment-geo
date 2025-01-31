@@ -257,7 +257,6 @@ class ObjectDetectionPanel {
   setupEventListeners() {
     // Close button
     this.panel.querySelector('.close-btn').addEventListener('click', () => {
-      e.preventDefault();
       this.hide();
     });
 
