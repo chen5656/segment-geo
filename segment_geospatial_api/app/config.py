@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     # Meta
     logging: LoggingSettings = LoggingSettings()
 
+    # Model Settings
+    DEFAULT_MODEL_TYPE: str = "sam2-hiera-large"
+    MAX_TILES_LIMIT: int = 100  # Maximum number of tiles allowed for processing
+
     # BACKEND_CORS_ORIGINS is a comma-separated list of origins
     # e.g: http://localhost,http://localhost:4200,http://localhost:3000
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = [

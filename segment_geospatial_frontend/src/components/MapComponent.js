@@ -19,7 +19,6 @@ const MapComponent = ({ center, zoom }) => {
   const [geoJsonData, setGeoJsonData] = useState(null);
   const featureGroupRef = useRef();
   const geoJsonLayerRef = useRef(null);
-  const [pointPosition, setPointPosition] = useState('bottom-right');
   const [lastRequestBody, setLastRequestBody] = useState(null);
   const fileInputRef = useRef(null);
   const [bbox, setBbox] = useState(null);
@@ -150,8 +149,6 @@ const MapComponent = ({ center, zoom }) => {
         setTextPrompt={setTextPrompt}
         isLoading={isLoading}
         handleDetect={handleDetect}
-        pointPosition={pointPosition}
-        setPointPosition={setPointPosition}
         zoomLevel={zoomLevel}
         setZoomLevel={setZoomLevel}
         geoJsonData={geoJsonData}
@@ -228,7 +225,6 @@ const MapComponent = ({ center, zoom }) => {
             geoJsonData={geoJsonData} 
             uploadedGeojson={uploadedGeojson}
             setGeoJsonLayer={geoJsonLayerRef}
-            pointPosition={pointPosition}
           />
           <SearchControl />
         </MapContainer>

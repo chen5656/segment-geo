@@ -9,6 +9,7 @@ import sys
 import itertools
 import os
 from pyproj import Transformer
+from app.config import settings
 
 # Configure loguru logger
 logger.remove()  # Remove default handler
@@ -29,7 +30,7 @@ class SegmentationPredictor:
     """Segmentation predictor class."""
     _instance = None
     _initialized = False
-    DEFAULT_MODEL_TYPE = "sam2-hiera-large"
+    DEFAULT_MODEL_TYPE = settings.DEFAULT_MODEL_TYPE
     
     def __new__(cls):
         """Create a new instance if one doesn't exist."""
@@ -215,9 +216,22 @@ class SegmentationPredictor:
         
         # Check number of tiles
         total_tiles = self.count_tiles(bounding_box, zoom_level)
-        if total_tiles > 300:  
-            logger.error(f"Too many tiles requested: {total_tiles}")
-            return {"error": f"Area too large for zoom level {zoom_level}. Please reduce zoom level or area size."}
+        if total_tiles > settings.MAX_TILES_LIMIT:  
+            logger.error(f"Too many tiles requested: {total_tiles}, maximum allowed tiles: {settings.MAX_TILES_LIMIT}")
+            return {
+                "error": {
+                    "message": f"Selected area is too large for zoom level {zoom_level}",
+                    "details": {
+                        "requested_tiles": total_tiles,
+                        "max_tiles": settings.MAX_TILES_LIMIT,
+                        "suggestions": [
+                            "Reduce the selected area size",
+                            "Decrease the zoom level",
+                            f"Current area requires {total_tiles} tiles, but maximum allowed is {settings.MAX_TILES_LIMIT}"
+                        ]
+                    }
+                }
+            }
         else:
             logger.info(f"Number of tiles to download: {total_tiles}")
         

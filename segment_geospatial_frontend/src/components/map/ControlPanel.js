@@ -12,8 +12,6 @@ const ControlPanel = ({
   setTextPrompt,
   isLoading,
   handleDetect,
-  pointPosition,
-  setPointPosition,
   zoomLevel,
   setZoomLevel,
   geoJsonData,
@@ -39,21 +37,6 @@ const ControlPanel = ({
         </Box>
         <TabPanel value="1">
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              select
-              disabled 
-              label="Point Position"
-              value={pointPosition}
-              onChange={(e) => setPointPosition(e.target.value)}
-              size="small"
-              fullWidth
-            >
-              <option value="top-right">Top Right</option>
-              <option value="top-left">Top Left</option>
-              <option value="top-left">Center</option>
-              <option value="bottom-right">Bottom Right</option>
-              <option value="bottom-left">Bottom Left</option>
-            </TextField>
             <TextField
               label="What do you want to detect?"
               placeholder="e.g., poles, trees, buildings"
@@ -132,19 +115,6 @@ const ControlPanel = ({
               <Typography variant="body2" color="text.secondary">
                 {geoJsonData.features?.length || 0} objects found
               </Typography>
-              <TextField
-                select
-                label="Point Position"
-                value={pointPosition}
-                onChange={(e) => setPointPosition(e.target.value)}
-                size="small"
-                fullWidth
-              >
-                <option value="top-right">Top Right</option>
-                <option value="top-left">Top Left</option>
-                <option value="bottom-right">Bottom Right</option>
-                <option value="bottom-left">Bottom Left</option>
-              </TextField>
               <Button
                 variant="contained"
                 color="primary"
