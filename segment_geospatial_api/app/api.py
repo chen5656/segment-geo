@@ -32,12 +32,20 @@ async def predict(request: schemas.PredictionRequest):
             box_threshold=request.box_threshold,
             text_threshold=request.text_threshold,
         )
-        if result.get("errors") is not None:
-            logger.warning(f"Prediction validation error: {result.get('errors')}")
-            return JSONResponse(
-                status_code=400,
-                content={"error": str(result["errors"])}
-            )
+        if result.get("error") is not None:
+            logger.warning(f"Prediction validation error: {result.get('error')}")
+            error_content = result["error"]
+            # Handle both simple string errors and structured error objects
+            if isinstance(error_content, str):
+                return JSONResponse(
+                    status_code=400,
+                    content={"error": {"message": error_content}}
+                )
+            else:
+                return JSONResponse(
+                    status_code=400,
+                    content={"error": error_content}
+                )
 
         logger.info(f"Prediction results: {result.get('predictions')}")
         
@@ -50,5 +58,5 @@ async def predict(request: schemas.PredictionRequest):
         logger.error(f"Error during prediction: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={"error": str(e)}
+            content={"error": {"message": str(e)}}
         )

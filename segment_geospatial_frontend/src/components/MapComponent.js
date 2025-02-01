@@ -26,6 +26,7 @@ const MapComponent = ({ center, zoom }) => {
   const [text_threshold, setTextThreshold] = useState(0.24);
   const [zoomLevel, setZoomLevel] = useState(zoom || 13);
   const [uploadedGeojson, setUploadedGeojson] = useState(null);
+  const [error, setError] = useState(null);
 
   const handleDrawStart = () => {
     const featureGroup = featureGroupRef.current;
@@ -72,22 +73,35 @@ const MapComponent = ({ center, zoom }) => {
     setIsLoading(true);
     
     try {
-      // const response = await axios.post(process.env.PREDICT_API_URL + '/predict', requestBody, {
       const response = await axios.post('http://localhost:8001/api/v1' + '/predict', requestBody, {
         headers: {
           'Content-Type': 'application/json'
         }
       });
 
-      if (response.status > 299 || !response.data) {
-        throw new Error("Error to get geojson data");
-      }else if(response.status === 200){
-        setGeoJsonData(response.data);
+      if (response.status > 299) {
+        throw new Error("Failed to get response from server");
       }
+      setGeoJsonData(response.data);
+      
     } catch (error) {
       console.error('Error during detection:', error);
-      const errorMessage = error.response?.data?.error || error.message || 'Server error';
-      alert(`Error: ${errorMessage}`);
+      let errorData = error.response?.data?.error;
+      
+      // Handle structured error response
+      if (errorData) {
+        if (typeof errorData === 'object') {
+          setError(errorData); // Store the structured error for ControlPanel
+          // Show a simplified message in the alert
+          alert(`Error: ${errorData.message}`);
+        } else {
+          setError({ message: errorData });
+          alert(`Error: ${errorData}`);
+        }
+      } else {
+        setError({ message: error.message || 'Server error' });
+        alert(error.message || 'Server error');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -154,6 +168,7 @@ const MapComponent = ({ center, zoom }) => {
         geoJsonData={geoJsonData}
         handleDownloadGeoJson={handleDownloadGeoJson}
         lastRequestBody={lastRequestBody}
+        error={error}
       />
 
       <div className="map-container">
