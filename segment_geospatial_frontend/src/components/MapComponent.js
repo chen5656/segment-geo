@@ -13,6 +13,8 @@ import MapController from './map/MapController';
 
 const { BaseLayer } = LayersControl;
 
+const PREDICT_API_URL = process.env.REACT_APP_PREDICT_API_URL;
+
 const MapComponent = ({ center, zoom }) => {
   const [textPrompt, setTextPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -73,7 +75,7 @@ const MapComponent = ({ center, zoom }) => {
     setIsLoading(true);
     
     try {
-      const response = await axios.post('http://localhost:8001/api/v1' + '/predict', requestBody, {
+      const response = await axios.post(`${PREDICT_API_URL}/predict`, requestBody, {
         headers: {
           'Content-Type': 'application/json'
         }
