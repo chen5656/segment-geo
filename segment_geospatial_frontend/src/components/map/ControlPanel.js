@@ -75,7 +75,7 @@ const ControlPanel = ({
               size="small"
               disabled={isLoading}
             >
-              {[15, 16, 17, 18, 19, 20, 21, 22].map((zoom) => (
+              {[19, 20, 21, 22].map((zoom) => (
                 <option key={zoom} value={zoom}>
                   {zoom}
                 </option>
