@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, FeatureGroup, LayersControl } from 'react-leaflet';
 import { EditControl } from 'react-leaflet-draw';
 import axios from 'axios';
@@ -24,11 +24,13 @@ const MapComponent = ({ center, zoom }) => {
   const [lastRequestBody, setLastRequestBody] = useState(null);
   const fileInputRef = useRef(null);
   const [bbox, setBbox] = useState(null);
-  const [box_threshold, setBoxThreshold] = useState(0.24);
-  const [text_threshold, setTextThreshold] = useState(0.24);
+  const [box_threshold] = useState(0.24); // Default box threshold, can add a function to change it in the control panel
+  const [text_threshold] = useState(0.24); // Default text threshold, can add a function to change it in the control panel
   const [zoomLevel, setZoomLevel] = useState(zoom || 13);
   const [uploadedGeojson, setUploadedGeojson] = useState(null);
   const [error, setError] = useState(null);
+
+  const thresholdsRef = useRef({ box: box_threshold, text: text_threshold });
 
   const handleDrawStart = () => {
     const featureGroup = featureGroupRef.current;
@@ -57,9 +59,13 @@ const MapComponent = ({ center, zoom }) => {
     setBbox(null);
   };
 
-  const handleDetect = async () => {
+  const handleDetect = useCallback(async () => {
     if (!bbox || !textPrompt) {
       alert('Please draw a rectangle and enter detection parameters');
+      return;
+    }
+
+    if (isLoading) {
       return;
     }
 
@@ -67,11 +73,17 @@ const MapComponent = ({ center, zoom }) => {
       bounding_box: bbox,
       text_prompt: textPrompt,
       zoom_level: zoomLevel,
-      box_threshold: box_threshold,
-      text_threshold: text_threshold,
+      box_threshold: thresholdsRef.current.box,
+      text_threshold: thresholdsRef.current.text,
     };
 
-    setLastRequestBody(requestBody);
+    if (lastRequestBody && 
+        JSON.stringify(requestBody) === JSON.stringify(lastRequestBody) &&
+        geoJsonData) {
+      console.log('Duplicate request detected, skipping...');
+      return;
+    }
+
     setIsLoading(true);
     
     try {
@@ -84,17 +96,18 @@ const MapComponent = ({ center, zoom }) => {
       if (response.status > 299) {
         throw new Error("Failed to get response from server");
       }
+      
+      setLastRequestBody(requestBody);
       setGeoJsonData(response.data);
+      setError(null);
       
     } catch (error) {
       console.error('Error during detection:', error);
       let errorData = error.response?.data?.error;
       
-      // Handle structured error response
       if (errorData) {
         if (typeof errorData === 'object') {
-          setError(errorData); // Store the structured error for ControlPanel
-          // Show a simplified message in the alert
+          setError(errorData);
           alert(`Error: ${errorData.message}`);
         } else {
           setError({ message: errorData });
@@ -104,10 +117,11 @@ const MapComponent = ({ center, zoom }) => {
         setError({ message: error.message || 'Server error' });
         alert(error.message || 'Server error');
       }
+      setLastRequestBody(null);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [bbox, textPrompt, zoomLevel, isLoading, lastRequestBody, geoJsonData]);
 
   const handleDownloadGeoJson = () => {
     if (geoJsonData) {
