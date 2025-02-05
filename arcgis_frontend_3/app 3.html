@@ -692,7 +692,7 @@
           const graphicsLayer = this.detectionParameters.layer;
           graphicsLayer.removeAll();
 
-          // Create a FeatureLayer for editing
+          // Create appropriate FeatureLayer based on display mode
           const featureLayer = new FeatureLayer({
             source: [], // Start with empty source
             objectIdField: "objectid",
@@ -706,24 +706,51 @@
                 type: "string"
               }
             ],
-            renderer: {
-              type: "simple",
-              symbol: {
-                type: "simple-fill",
-                color: [
-                  parseInt(this.color.slice(1, 3), 16),
-                  parseInt(this.color.slice(3, 5), 16),
-                  parseInt(this.color.slice(5, 7), 16),
-                  this.opacity
-                ],
-                style: "solid",
-                outline: {
-                  color: "white",
-                  width: 1
+            renderer: this.displayMode === 'segments' ? 
+              // Polygon renderer
+              {
+                type: "simple",
+                symbol: {
+                  type: "simple-fill",
+                  color: [
+                    parseInt(this.color.slice(1, 3), 16),
+                    parseInt(this.color.slice(3, 5), 16),
+                    parseInt(this.color.slice(5, 7), 16),
+                    this.opacity
+                  ],
+                  style: "solid",
+                  outline: {
+                    color: "white",
+                    width: 1
+                  }
                 }
-              }
-            },
-            geometryType: this.displayMode === 'segments' ? "polygon" : "point"
+              } :
+              // Point renderer
+              {
+                type: "simple",
+                symbol: {
+                  type: "simple-marker",
+                  style: "circle",
+                  color: [
+                    parseInt(this.color.slice(1, 3), 16),
+                    parseInt(this.color.slice(3, 5), 16),
+                    parseInt(this.color.slice(5, 7), 16),
+                    this.opacity
+                  ],
+                  size: "12px",
+                  outline: {
+                    color: "white",
+                    width: 1
+                  }
+                }
+              },
+            geometryType: this.displayMode === 'segments' ? "polygon" : "point",
+            popupTemplate: {
+              title: "{value}",
+              content: this.displayMode === 'segments' ? 
+                "Polygon Area: {value}" : 
+                "Point Location: {value}"
+            }
           });
 
           // Add features to the layer
@@ -733,11 +760,12 @@
               return {
                 geometry: {
                   type: "polygon",
-                  rings: feature.geometry.coordinates[0]
+                  rings: feature.geometry.coordinates[0],
+                  spatialReference: { wkid: 4326 }
                 },
                 attributes: {
                   objectid: index + 1,
-                  value: feature.properties.value
+                  value: feature.properties.value || 'Unknown'
                 }
               };
             });
@@ -755,11 +783,12 @@
                 geometry: {
                   type: "point",
                   longitude: centroid[0],
-                  latitude: centroid[1]
+                  latitude: centroid[1],
+                  spatialReference: { wkid: 4326 }
                 },
                 attributes: {
                   objectid: index + 1,
-                  value: feature.properties.value
+                  value: feature.properties.value || 'Unknown'
                 }
               };
             });
