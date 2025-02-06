@@ -1,0 +1,38 @@
+# Use NVIDIA CUDA base image with conda
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
+
+# Install miniconda
+ENV CONDA_DIR /opt/conda
+RUN apt-get update && apt-get install -y wget && \
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
+    bash ~/miniconda.sh -b -p /opt/conda && \
+    rm ~/miniconda.sh
+
+# Add conda to path
+ENV PATH=$CONDA_DIR/bin:$PATH
+
+WORKDIR /app
+
+# Copy only the environment file first to leverage Docker cache
+COPY environment.yml .
+
+# Create conda environment
+RUN conda env create -f environment.yml
+
+# Copy the rest of the application
+COPY . .
+
+# Set environment variables
+ENV MODEL_PATH=/app/models \
+    PYTHONPATH=/app \
+    CONDA_DEFAULT_ENV=geo_app_env \
+    NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+# Initialize conda in bash
+SHELL ["/bin/bash", "-c"]
+
+# Start the API server
+CMD source /opt/conda/etc/profile.d/conda.sh && \
+    conda activate geo_app_env && \
+    uvicorn app.main:app --host 0.0.0.0 --port 8001
