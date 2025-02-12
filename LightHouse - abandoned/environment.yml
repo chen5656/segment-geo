@@ -1,0 +1,26 @@
+name: lighthouse
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - pytorch
+  - torchvision
+  - numpy
+  - pillow
+  - matplotlib
+  - opencv
+  - jupyter
+  - pip:
+    - segment-anything
+    - transformers
+    - tensorflow  # 用于模型转换
+    - tensorflowjs  # 用于将模型转换为tfjs格式
+    - onnx  # 用于模型格式转换
+    - onnxruntime
+    - supervision  # 用于图像处理和可视化
+    - tqdm  # 进度条
+    - pycocotools  # 用于处理分割任务
+    - gradio  # 用于快速测试和可视化（可选） 
