@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     logging: LoggingSettings = LoggingSettings()
 
     # Model Settings
-    DEFAULT_MODEL_TYPE: str = "sam2-hiera-large"
+    DEFAULT_MODEL_TYPE: str = "sam2-hiera-base-plus"
     MAX_TILES_LIMIT: int = 1000  # Maximum number of tiles allowed for processing
 
     # BACKEND_CORS_ORIGINS is a comma-separated list of origins

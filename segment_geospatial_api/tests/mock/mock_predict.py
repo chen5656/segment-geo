@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch, AsyncMock
 from app.main import app
-from app.schemas.predict import PredictionRequest
+from segment_geospatial_api.app.schemas.segmentation import SegmentationWithTextPromptRequest, SegmentationWithPointsRequest
 
 client = TestClient(app)
 

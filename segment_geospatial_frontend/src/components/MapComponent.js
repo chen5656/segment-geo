@@ -87,7 +87,7 @@ const MapComponent = ({ center, zoom }) => {
     setIsLoading(true);
     
     try {
-      const response = await axios.post(`${PREDICT_API_URL}/predict`, requestBody, {
+      const response = await axios.post(`${REACT_APP_SEGMENT_TEXT_PROMPT_API_URL}`, requestBody, {
         headers: {
           'Content-Type': 'application/json'
         }
