@@ -923,7 +923,7 @@
           redirect: "follow"
         };
 
-        const response = await fetch("http://localhost:8001/api/v1/predict", requestOptions);
+        const response = await fetch("http://localhost:8001/api/v1/segment/text_prompt", requestOptions);
         if (!response.ok) {
           throw new Error("Network response was not ok while sending object detection request.");
         }
