@@ -8,6 +8,7 @@ from app.retry.retry import retry_prediction
 from app import __version__, schemas
 from app.config import settings
 
+# 创建路由器
 api_router = APIRouter()
 
 @api_router.get("/health", response_model=schemas.Health, status_code=200)
@@ -20,12 +21,19 @@ def health() -> dict:
     )
     return health.dict()
 
+@api_router.post("/predict", 
+                response_model=Union[schemas.SegmentationGeojsonResults, schemas.ErrorResponse], 
+                status_code=200,
+                deprecated=True)
 @api_router.post("/segment/text_prompt", 
-                response_model=Union[schemas.PredictionResults, schemas.ErrorResponse], 
-                status_code=200)
+               response_model=Union[schemas.SegmentationGeojsonResults, schemas.ErrorResponse], 
+               status_code=200)
 async def segment_with_text_prompt(request: schemas.SegmentationWithTextPromptRequest):
     """
     Perform segmentation using a text prompt to identify target areas
+    
+    Note: The /predict endpoint is deprecated. 
+    Please use /segment/text_prompt instead.
     """
     try:
         # Create callback function that captures the request parameters
@@ -76,8 +84,8 @@ async def segment_with_text_prompt(request: schemas.SegmentationWithTextPromptRe
         )
 
 @api_router.post("/segment/interactive", 
-                response_model=Union[schemas.SegmentationGeojsonResults, schemas.ErrorResponse], 
-                status_code=200)
+               response_model=Union[schemas.SegmentationGeojsonResults, schemas.ErrorResponse], 
+               status_code=200)
 async def segment_interactive(request: schemas.SegmentationWithPointsRequest):
     """
     Perform interactive segmentation using include/exclude points

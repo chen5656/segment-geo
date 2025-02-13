@@ -15,27 +15,27 @@ from segment_geospatial_api.app.segment_geospatial.predict import SegmentationPr
 from segment_geospatial_api.app.schemas.segmentation import SegmentationWithTextPromptRequest, SegmentationWithPointsRequest
 
 
-def save_geojson(data, prefix="test_result"):
-    """Save GeoJSON data to a file with timestamp"""
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"{prefix}_{timestamp}.geojson"
-    
-    # Create results directory if it doesn't exist
-    results_dir = os.path.join(project_root, "tests/test_results")
-    os.makedirs(results_dir, exist_ok=True)
-    
-    filepath = os.path.join(results_dir, filename)
-    
-    with open(filepath, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-    
-    print(f"GeoJSON saved to: {filepath}")
-    return filepath
-
 class TestSegmentationPredictor:
     def __init__(self):
         self.predictor = SegmentationPredictor()
         self.predictor.setup("sam2-hiera-tiny")
+
+    def save_geojson(data, prefix="test_result"):
+        """Save GeoJSON data to a file with timestamp"""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{prefix}_{timestamp}.geojson"
+
+        # Create results directory if it doesn't exist
+        results_dir = os.path.join(project_root, "tests/test_results")
+        os.makedirs(results_dir, exist_ok=True)
+
+        filepath = os.path.join(results_dir, filename)
+
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+        print(f"GeoJSON saved to: {filepath}")
+        return filepath
 
     async def test_predict_segment_with_text_prompt(self):
         request_data = {
@@ -75,7 +75,7 @@ class TestSegmentationPredictor:
         
         # Save the GeoJSON result
         if result['geojson']:
-            saved_file = save_geojson(
+            self.save_geojson(
                 result['geojson'], 
                 f"trees_detection_{request.zoom_level}"
             )
