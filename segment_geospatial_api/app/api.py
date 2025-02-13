@@ -1,9 +1,10 @@
-from typing import Union
+from typing import Union, List
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from app.segment_geospatial.predict import predictor
 from loguru import logger
 from app.retry.retry import retry_prediction
+import numpy as np
 
 from app import __version__, schemas
 from app.config import settings
@@ -83,18 +84,23 @@ async def segment_with_text_prompt(request: schemas.SegmentationWithTextPromptRe
             content={"error": {"message": str(e)}}
         )
 
-@api_router.post("/segment/interactive", 
+@api_router.post("/segment/input_points_prompt", 
                response_model=Union[schemas.SegmentationGeojsonResults, schemas.ErrorResponse], 
                status_code=200)
 async def segment_interactive(request: schemas.SegmentationWithPointsRequest):
     """
-    Perform interactive segmentation using include/exclude points
+    Perform interactive segmentation using include/exclude points.
+    The bounding box is automatically calculated from the points with a buffer.
+    
+    Args:
+        request: SegmentationWithPointsRequest containing points and parameters
+        
+    Returns:
+        Segmentation results in GeoJSON format
     """
     try:
         async def points_prediction_callback():
             return await predictor.segment_with_points(
-                bounding_box=request.bounding_box,
-                text_prompt=request.text_prompt,
                 zoom_level=request.zoom_level,
                 box_threshold=request.box_threshold,
                 points_include=request.points_include,
@@ -103,13 +109,30 @@ async def segment_interactive(request: schemas.SegmentationWithPointsRequest):
             
         result = await retry_prediction(points_prediction_callback)
         
-        if result is None:
-            return JSONResponse(
-                status_code=400,
-                content={"error": {"message": "Failed to download satellite imagery after multiple retries"}}
-            )
-            
-        return result
+
+        if result.get("error") is not None:
+            logger.warning(f"Prediction validation error: {result.get('error')}")
+            error_content = result["error"]
+            # Handle both simple string errors and structured error objects
+            if isinstance(error_content, str):
+                return JSONResponse(
+                    status_code=400,
+                    content={"error": {"message": error_content}}
+                )
+            else:
+                return JSONResponse(
+                    status_code=400,
+                    content={"error": error_content}
+                )
+
+        logger.info(f"Prediction results: {result.get('predictions')}")
+        
+        return JSONResponse(
+            status_code=200,
+            content=result.get("geojson")
+        )
+
+ 
     except Exception as e:
         logger.error(f"Error during segmentation with points: {str(e)}")
         return JSONResponse(

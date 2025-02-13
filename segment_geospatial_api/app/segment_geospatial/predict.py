@@ -1,15 +1,17 @@
-from samgeo import tms_to_geotiff, raster_to_vector
+from samgeo import SamGeo, tms_to_geotiff, raster_to_vector
 from samgeo.text_sam import LangSAM
 import uuid
 import json
 import math
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 from loguru import logger
 import sys
 import itertools
 import os
 from pyproj import Transformer
 from app.config import settings
+import numpy as np
+from datetime import datetime
 
 # Configure loguru logger
 logger.remove()  # Remove default handler
@@ -29,9 +31,23 @@ logger.add(sys.stderr, level="INFO")
 class SegmentationPredictor:
     """Segmentation predictor class."""
     _instance = None
-    _initialized = False
-    DEFAULT_MODEL_TYPE = settings.DEFAULT_MODEL_TYPE
+    _initialized_langsam = False
+    _initialized_samgeo = False
+    transformer = Transformer.from_crs("EPSG:3857", "EPSG:4326", always_xy=True)
+    DEFAULT_LANGSAM_MODEL_TYPE = settings.DEFAULT_LANGSAM_MODEL_TYPE
+    DEFAULT_SAMGEO_MODEL_TYPE = settings.DEFAULT_SAMGEO_MODEL_TYPE
     
+    # Validate model_type
+    VALID_MODEL_TYPES = [
+        # SAM 1 models
+        "vit_h", "vit_l", "vit_b",
+        # SAM 2 models
+        "sam2-hiera-tiny",
+        "sam2-hiera-small",
+        "sam2-hiera-base-plus", 
+        "sam2-hiera-large"
+    ]
+
     def __new__(cls):
         """Create a new instance if one doesn't exist."""
         if cls._instance is None:
@@ -42,53 +58,67 @@ class SegmentationPredictor:
         """Empty init to maintain singleton pattern."""
         pass
 
-    def setup(self, model_type=DEFAULT_MODEL_TYPE):
+
+
+    def setup(self, text_model_type=DEFAULT_LANGSAM_MODEL_TYPE, samgeo_model_type=DEFAULT_SAMGEO_MODEL_TYPE):
         """Initialize the LangSAM model.
         
         Args:
-            model_type (str): The model type to use. Can be one of:
-                SAM 1 models:
-                - "vit_h"
-                - "vit_l"
-                - "vit_b"
-                SAM 2 models:
-                - "sam2-hiera-tiny"
-                - "sam2-hiera-small" 
-                - "sam2-hiera-base-plus"
-                - "sam2-hiera-large" (default)
+            model_type (str): The model type to use. Can be one of VALID_MODEL_TYPES
         
         Raises:
             ValueError: If invalid model_type is provided.
             RuntimeError: If model initialization fails.
         """
-        logger.info("Initializing LangSAM model...")
-        
-        # Validate model_type
-        valid_models = [
-            # SAM 1 models
-            "vit_h", "vit_l", "vit_b",
-            # SAM 2 models
-            "sam2-hiera-tiny",
-            "sam2-hiera-small",
-            "sam2-hiera-base-plus", 
-            "sam2-hiera-large"
-        ]
-        if model_type not in valid_models:
-            raise ValueError(
-                f"Invalid model_type: {model_type}. Must be one of: {valid_models}"
-            )
-        
-        try:
-            self._sam = LangSAM(model_type=model_type)
-            self.transformer = Transformer.from_crs("EPSG:3857", "EPSG:4326", always_xy=True)
-            self._initialized = True
-            logger.success("LangSAM model initialized successfully")
-        except Exception as e:
-            logger.error(f"Failed to initialize LangSAM model: {str(e)}")
-            raise RuntimeError(f"Failed to initialize LangSAM model: {str(e)}")
+        logger.info("Setting up SegmentationPredictor...")        
 
+        if not text_model_type and not samgeo_model_type:
+            raise ValueError("Text model type or SamGeo model type must be provided")
+        
+        if text_model_type:
+            self.setup_langsam(text_model_type)
+        
+        if samgeo_model_type:
+            self.setup_samgeo(samgeo_model_type)
+
+
+    def setup_samgeo(self, model_type):
+        if model_type not in self.VALID_MODEL_TYPES:
+            raise ValueError(
+                f"Invalid model_type: {model_type}. Must be one of: {self.VALID_MODEL_TYPES}"
+            )
+        else:
+            # Setup SamGeo model for point prompt
+            try:
+                logger.info(f"Initializing SamGeo model with type: {model_type}")
+                self._samgeo = SamGeo(model_type=model_type,
+                                        automatic=False,
+                                        sam_kwargs=None)
+                self._initialized_samgeo = True
+                logger.success("SamGeo model initialized successfully")
+            except Exception as e:
+                logger.error(f"Failed to initialize SamGeo model: {str(e)}")
+                raise RuntimeError(f"Failed to initialize LangSAM model: {str(e)}")
+
+    def setup_langsam(self, model_type):
+        if model_type not in self.VALID_MODEL_TYPES:
+            raise ValueError(
+                f"Invalid model_type: {model_type}. Must be one of: {self.VALID_MODEL_TYPES}"
+            )
+        else:
+            # Setup LangSAM model for text prompt
+            try:
+                logger.info(f"Initializing LangSAM model with type: {model_type}")
+                self._langsam = LangSAM(model_type=model_type)
+                self._initialized_langsam = True
+                logger.success("LangSAM model initialized successfully")
+            except Exception as e:
+                logger.error(f"Failed to initialize LangSAM model: {str(e)}")
+                raise RuntimeError(f"Failed to initialize LangSAM model: {str(e)}")
+            
+            
     @property
-    def sam(self):
+    def langsam(self):
         """Get the SAM model instance, initializing with default model if needed.
         
         Returns:
@@ -97,9 +127,23 @@ class SegmentationPredictor:
         Raises:
             RuntimeError: If model initialization fails.
         """
-        if not self._initialized:
-            self.setup()  # Initialize with default model
-        return self._sam
+        if not self._initialized_langsam:
+            self.setup(text_model_type=self.DEFAULT_LANGSAM_MODEL_TYPE, samgeo_model_type=None)  # Initialize with default model
+        return self._langsam
+    
+    @property
+    def samgeo(self):
+        """Get the SAM model instance, initializing with default model if needed.
+        
+        Returns:
+            LangSAM: The initialized SAM model instance.
+        
+        Raises:
+            RuntimeError: If model initialization fails.
+        """
+        if not self._initialized_samgeo:
+            self.setup(text_model_type=None, samgeo_model_type=self.DEFAULT_SAMGEO_MODEL_TYPE)  # Initialize with default model
+        return self._samgeo
 
     @staticmethod
     def count_tiles(bounding_box, zoom_level):
@@ -180,320 +224,289 @@ class SegmentationPredictor:
             overwrite=True
         )
 
-    async def segment_with_text_prompt(
-        self, 
-        *, 
-        bounding_box: list, 
-        text_prompt: str, 
-        box_threshold: float = 0.3,  # Added required parameter
-        text_threshold: float = 0.3, # Added required parameter
-        zoom_level: int = 20
+    async def _process_segmentation(
+        self,
+        input_image: str,
+        output_image: str,
+        output_geojson: str,
+        points: List[List[float]] = None,
+        point_labels: List[int] = None,
+        text_prompt: str = None,
+        box_threshold: float = 0.3,
+        text_threshold: float = 0.3,
     ) -> Dict[str, Any]:
-        """Make a prediction using SAM.
+        """
+        Common processing logic for both text-based and point-based segmentation.
         
         Args:
-            bounding_box (list): Coordinates [west, south, east, north]
-            text_prompt (str): Text description of object to detect
-            box_threshold (float): Confidence threshold for object detection boxes (0-1)
-            text_threshold (float): Confidence threshold for text-to-image matching (0-1)
-            zoom_level (int, optional): Zoom level for satellite imagery. Defaults to 20.
+            input_image: Path to input satellite image
+            output_image: Path to output visualization
+            output_geojson: Path to output GeoJSON
+            points: Optional list of points for point-based segmentation
+            point_labels: Optional list of point labels (1 for include, -1 for exclude)
+            text_prompt: Optional text prompt for text-based segmentation
+            box_threshold: Confidence threshold for detection
+            text_threshold: Confidence threshold for text matching
+            
+        Returns:
+            Dict containing results or error message
         """
-        logger.info(
-            f"Starting prediction for text_prompt='{text_prompt}', "
-            f"bbox={bounding_box}, zoom={zoom_level}, "
-            f"box_threshold={box_threshold}, text_threshold={text_threshold}"
-        )
+        try:
+            # Log start time
+            start_time = datetime.now()
+            logger.info(f"Starting segmentation at {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+            
+            # Run prediction based on segmentation type
+            if points is not None and point_labels is not None:                
+                # Add validation for input file path
+                if not os.path.exists(input_image):
+                    raise ValueError(f"Input image file not found: {input_image}")
+                
+                # Ensure output paths are properly set
+                if not output_image or not output_geojson:
+                    raise ValueError("Output paths must be specified")
+                
+                self.samgeo.set_image(input_image)
+
+                self.samgeo.predict(
+                    point_coords=np.array(points),
+                    point_labels=np.array(point_labels),
+                    point_crs="EPSG:4326",
+                    output=output_image,
+                )
+            elif text_prompt is not None:
+                logger.info(f"Running text-based prediction with prompt: '{text_prompt}'")
+                self.langsam.predict(
+                    input_image,
+                    text_prompt,
+                    box_threshold,
+                    text_threshold
+                )                            
+                # Generate visualization for text-based segmentation
+                self.langsam.show_anns(
+                    cmap="Greys_r",
+                    add_boxes=False,
+                    alpha=1,
+                    title="Segmentation Result",
+                    blend=False,
+                    output=output_image,
+                )
+            else:
+                raise ValueError("No segmentation type provided")
+            
+            # Log completion time and duration
+            end_time = datetime.now()
+            duration = (end_time - start_time).total_seconds()
+            logger.info(f"Completed segmentation at {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+            logger.info(f"Segmentation processing time: {duration:.2f} seconds")
+            
+            # Convert to GeoJSON
+            raster_to_vector(output_image, output_geojson, None)
+            logger.info(f"GeoJSON converted to {output_geojson}")
+            # Read and transform GeoJSON
+            with open(output_geojson, 'r') as f:
+                geojson_content = json.load(f)
+                
+            if not geojson_content.get('features'):
+                return {"error": "No features found in the specified area"}
+            
+            transformed_geojson = self.transform_coordinates(geojson_content)
+            geojson_count = len(transformed_geojson.get('features', []))
+            logger.info(f"Successfully found {geojson_count} features")
+            
+            return {
+                "errors": None,
+                "version": "1.0",
+                "predictions": f"Successfully found {geojson_count} features",
+                "geojson": transformed_geojson
+            }
+            
+        except Exception as e:
+            logger.error(f"Error during segmentation processing: {str(e)}", exc_info=True)
+            return {"error": str(e)}
+
+    async def segment_with_points(
+        self,
+        zoom_level: int,
+        box_threshold: float,
+        points_include: List[List[float]],
+        points_exclude: Optional[List[List[float]]] = None
+    ) -> Dict[str, Any]:
+        """
+        Perform segmentation using include/exclude points.
+        Automatically calculates bounding box from points.
         
-        # Validate thresholds
-        if not (0 < box_threshold <= 1) or not (0 < text_threshold <= 1):
-            logger.error(f"Invalid threshold values: box={box_threshold}, text={text_threshold}")
-            return {"error": "Threshold values must be between 0 and 1"}
+        Args:
+            zoom_level: Zoom level for satellite imagery
+            box_threshold: Confidence threshold for detection
+            points_include: List of points to include
+            points_exclude: Optional list of points to exclude
+            
+        Returns:
+            Segmentation results
+        """
+        # Input validation
+        if not points_include:
+            return {"error": "At least one include point must be provided"}
+            
+        if not (19 <= zoom_level <= 22):
+            return {"error": "Zoom level must be between 19 and 22"}
+            
+        # Calculate bounding box
+        buffer_size = self.calculate_buffer_size(zoom_level)
+        all_points = points_include.copy()
+        if points_exclude:
+            all_points.extend(points_exclude)
+        bounding_box = self.calculate_bounding_box(all_points, buffer_size)
         
-        # Validate inputs
+        # Generate unique filenames
+        request_id = str(uuid.uuid4())
+        input_image = f"satellite_{request_id}.tif"
+        output_image = f"segment_{request_id}.tif"
+        output_geojson = f"segment_{request_id}.geojson"
+        
+        try:
+            # Download satellite imagery
+            self.download_satellite_image(input_image, bounding_box, zoom_level)
+            
+            # Prepare points and labels
+            points = points_include + (points_exclude or [])
+            point_labels = [1] * len(points_include) + [-1] * len(points_exclude or [])
+            
+            # Process segmentation
+            result = await self._process_segmentation(
+                input_image=input_image,
+                output_image=output_image,
+                output_geojson=output_geojson,
+                points=points,
+                point_labels=point_labels,
+                box_threshold=box_threshold
+            )
+            
+            return result
+            
+        finally:
+            # Clean up temporary files
+            for file in [input_image, output_image, output_geojson]:
+                if os.path.exists(file):
+                    try:
+                        os.remove(file)
+                    except Exception as e:
+                        logger.warning(f"Failed to remove temporary file {file}: {str(e)}")
+
+    async def segment_with_text_prompt(
+        self,
+        *,
+        bounding_box: list,
+        text_prompt: str,
+        box_threshold: float = 0.3,
+        text_threshold: float = 0.3,
+        zoom_level: int = 20
+    ) -> Dict[str, Any]:
+        """
+        Make a prediction using text prompt.
+        
+        Args:
+            bounding_box: Coordinates [west, south, east, north]
+            text_prompt: Text description of object to detect
+            box_threshold: Confidence threshold for detection
+            text_threshold: Confidence threshold for text matching
+            zoom_level: Zoom level for satellite imagery
+        """
+        # Input validation
         if len(bounding_box) != 4:
-            logger.error(f"Invalid bounding box length: {len(bounding_box)}")
-            return {"error": "Bounding box must contain exactly 4 coordinates [west, south, east, north]"}
-        
-        # Check number of tiles
+            return {"error": "Bounding box must contain exactly 4 coordinates"}
+            
+        if not text_prompt.strip():
+            return {"error": "Text prompt cannot be empty"}
+            
+        if not (19 <= zoom_level <= 22):
+            return {"error": "Zoom level must be between 19 and 22"}
+            
+        # Check tile count
         total_tiles = self.count_tiles(bounding_box, zoom_level)
-        if total_tiles > settings.MAX_TILES_LIMIT:  
-            logger.error(f"Too many tiles requested: {total_tiles}, maximum allowed tiles: {settings.MAX_TILES_LIMIT}")
+        if total_tiles > settings.MAX_TILES_LIMIT:
             return {
                 "error": {
                     "message": f"Selected area is too large for zoom level {zoom_level}",
                     "details": {
                         "requested_tiles": total_tiles,
-                        "max_tiles": settings.MAX_TILES_LIMIT,
-                        "suggestions": [
-                            "Reduce the selected area size",
-                            "Decrease the zoom level",
-                            f"Current area requires {total_tiles} tiles, but maximum allowed is {settings.MAX_TILES_LIMIT}"
-                        ]
+                        "max_tiles": settings.MAX_TILES_LIMIT
                     }
                 }
             }
-        else:
-            logger.info(f"Number of tiles to download: {total_tiles}")
-        
-        if not text_prompt.strip():
-            logger.error("Empty text prompt provided")
-            return {"error": "Text prompt cannot be empty"}
             
-        if not (1 <= zoom_level <= 22):
-            logger.error(f"Invalid zoom level: {zoom_level}")
-            return {"error": "Zoom level must be between 1 and 22"}
-
-        # Generate unique filenames for this request
+        # Generate unique filenames
         request_id = str(uuid.uuid4())
-        logger.info(f"Generated request ID: {request_id}")
         input_image = f"satellite_{request_id}.tif"
         output_image = f"segment_{request_id}.tif"
         output_geojson = f"segment_{request_id}.geojson"
         
         try:
             # Download satellite imagery
-            logger.info("Downloading satellite imagery...")
-            try:
-                self.download_satellite_image(
-                    input_image,
-                    bounding_box,
-                    zoom_level
-                )
-                logger.success("Satellite imagery downloaded successfully")
-            except Exception as e:
-                logger.error(f"Failed to download satellite imagery: {str(e)}", exc_info=True)
-                return {"error": f"Failed to download satellite imagery: {str(e)}"}
-
-            # Run prediction
-            logger.info("Running SAM prediction...")
-            try:
-                # Run synchronous predict method in thread pool
-                self.sam.predict(
-                    input_image, 
-                    text_prompt, 
-                    box_threshold,  # Use input parameter
-                    text_threshold # Use input parameter
-                )
-                logger.success("SAM prediction completed successfully")
-            except Exception as e:
-                logger.error(f"Failed to run prediction: {str(e)}", exc_info=True)
-                return {"error": f"Failed to run prediction: {str(e)}"}
+            self.download_satellite_image(input_image, bounding_box, zoom_level)
             
-            # Generate visualization
-            logger.info("Generating visualization...")
-            try:
-                self.sam.show_anns(
-                    cmap="Greys_r",
-                    add_boxes=False,
-                    alpha=1,
-                    title=f"Automatic Segmentation of {text_prompt}",
-                    blend=False,
-                    output=output_image,
-                )
-                logger.success("Visualization generated successfully")
-            except Exception as e:
-                logger.error(f"Failed to generate visualization: {str(e)}", exc_info=True)
-                return {"error": f"Failed to generate visualization: {str(e)}"}
+            # Process segmentation
+            result = await self._process_segmentation(
+                input_image=input_image,
+                output_image=output_image,
+                output_geojson=output_geojson,
+                text_prompt=text_prompt,
+                box_threshold=box_threshold,
+                text_threshold=text_threshold
+            )
             
-            # Convert to GeoJSON
-            logger.info("Converting to GeoJSON...")
-            try:
-                raster_to_vector(output_image, output_geojson, None)
-                # raster_to_geojson(
-                #     output_image,
-                #     output_geojson,
-                #     None      # simplify_tolerance
-                # )
-                logger.success("Converted to GeoJSON successfully")
-            except Exception as e:
-                logger.error(f"Failed to convert to GeoJSON: {str(e)}. There may be no {text_prompt} in the specified area", exc_info=True)
-                return {"error": f"Failed to convert to GeoJSON: {str(e)}. There may be no {text_prompt} in the specified area"}
-            
-            # Read GeoJSON content
-            logger.info("Reading GeoJSON content...")
-            try:
-                with open(output_geojson, 'r') as f:
-                    geojson_content = json.load(f)
-                    
-                if not geojson_content.get('features'):
-                    logger.warning(f"No {text_prompt} found in the specified area")
-                    return {"error": f"No {text_prompt} found in the specified area"}
-                
-                # Transform coordinates to lat/long
-                logger.info("Transforming coordinates to WGS84...")
-                transformed_geojson = self.transform_coordinates(geojson_content)
-                geojson_count = len(transformed_geojson.get('features', []))
-                
-                logger.success(f"Successfully found {geojson_count} features")
-                return {
-                    "errors": None,
-                    "version": "1.0",
-                    "predictions": f"Successfully found {geojson_count} features",
-                    "geojson": transformed_geojson
-                }
-                
-            except Exception as e:
-                logger.error(f"Failed to process GeoJSON output: {str(e)}", exc_info=True)
-                return {"error": f"Failed to process GeoJSON output: {str(e)}"}
+            return result
             
         finally:
             # Clean up temporary files
-            logger.info("Cleaning up temporary files...")
             for file in [input_image, output_image, output_geojson]:
                 if os.path.exists(file):
                     try:
                         os.remove(file)
-                        logger.debug(f"Removed temporary file: {file}")
                     except Exception as e:
                         logger.warning(f"Failed to remove temporary file {file}: {str(e)}")
 
-    async def segment_with_points(
-        self,
-        *,
-        bounding_box: list,
-        text_prompt: str,
-        zoom_level: int = 20,
-        box_threshold: float = 0.3,
-        points_include: list,
-        points_exclude: list = []
-    ) -> Dict[str, Any]:
-        """Segment an area based on provided points.
+    def calculate_buffer_size(self, zoom_level: int) -> float:
+        """
+        Calculate buffer size in degrees based on zoom level.
+        The buffer size decreases as zoom level increases.
         
         Args:
-            bounding_box (list): Coordinates [west, south, east, north]
-            text_prompt (str): Text description of object to detect
-            zoom_level (int, optional): Zoom level for satellite imagery. Defaults to 20.
-            box_threshold (float, optional): Confidence threshold for object detection boxes (0-1). Defaults to 0.3.
-            points_include (list): List of points [(x, y), (x, y), ...]
-            points_exclude (list): List of points [(x, y), (x, y), ...]
-        """ 
-        logger.info(
-            f"Starting segmentation with points for text_prompt='{text_prompt}', "
-            f"bbox={bounding_box}, zoom={zoom_level}, "
-            f"box_threshold={box_threshold}, points_include={points_include}, points_exclude={points_exclude}"
-        )   
+            zoom_level: Zoom level (19-22)
+            
+        Returns:
+            Buffer size in degrees
+        """
+        # Base buffer size at zoom level 19
+        base_buffer = 0.001
         
-        # Validate inputs
-        if not bounding_box or len(bounding_box) != 4:
-            logger.error("Invalid bounding box provided")
-            return {"error": "Bounding box must contain exactly 4 coordinates [west, south, east, north]"}
+        # Reduce buffer size by factor of 2 for each zoom level increase
+        zoom_adjustment = zoom_level - 19
+        buffer_size = base_buffer / (2 ** zoom_adjustment)
         
-        if not text_prompt.strip():
-            logger.error("Empty text prompt provided")
-            return {"error": "Text prompt cannot be empty"}
-        
-        if not (1 <= zoom_level <= 22):
-            logger.error(f"Invalid zoom level: {zoom_level}")
-            return {"error": "Zoom level must be between 1 and 22"}
+        return buffer_size
 
-        if not points_include:
-            logger.error("No points provided")
-            return {"error": "At least one point must be provided"}
+    def calculate_bounding_box(self, points: List[List[float]], buffer_size: float) -> List[float]:
+        """
+        Calculate bounding box from points with buffer.
         
-        # Generate unique filenames for this request
-        request_id = str(uuid.uuid4())  
-        logger.info(f"Generated request ID: {request_id}")
-        input_image = f"satellite_{request_id}.tif"
-        output_image = f"segment_{request_id}.tif"
-        output_geojson = f"segment_{request_id}.geojson"
+        Args:
+            points: List of [longitude, latitude] coordinates
+            buffer_size: Buffer size in degrees
+            
+        Returns:
+            [min_lon, min_lat, max_lon, max_lat]
+        """
+        points_array = np.array(points)
+        min_lon = points_array[:, 0].min() - buffer_size
+        min_lat = points_array[:, 1].min() - buffer_size
+        max_lon = points_array[:, 0].max() + buffer_size
+        max_lat = points_array[:, 1].max() + buffer_size
         
-        try:
-            # Download satellite imagery
-            logger.info("Downloading satellite imagery...")
-            try:
-                self.download_satellite_image(
-                    input_image,
-                    bounding_box,
-                    zoom_level  
-                )
-                logger.success("Satellite imagery downloaded successfully")
-            except Exception as e:
-                logger.error(f"Failed to download satellite imagery: {str(e)}", exc_info=True)
-                return {"error": f"Failed to download satellite imagery: {str(e)}"}
-            
-            points = points_include + points_exclude
-            point_labels = [1] * len(points_include) + [-1] * len(points_exclude)
-            
-            # Run prediction
-            logger.info("Running SAM prediction...")
-            try:
-                # Run synchronous predict method in thread pool
-                self.sam.predict(
-                    input_image,
-                    point_coords=points,
-                    point_labels=point_labels,
-                    point_crs="EPSG:4326",
-                    # box_threshold=box_threshold,
-                )
-                logger.success("SAM prediction completed successfully")
-            except Exception as e:
-                logger.error(f"Failed to run prediction: {str(e)}", exc_info=True)
-                return {"error": f"Failed to run prediction: {str(e)}"}
-            
-            # Generate visualization
-            logger.info("Generating visualization...")
-            try:
-                self.sam.show_anns(
-                    cmap="Greys_r",
-                    add_boxes=False,
-                    alpha=1,
-                    title=f"Automatic Segmentation of {text_prompt}",
-                    blend=False,
-                    output=output_image,
-                )
-                logger.success("Visualization generated successfully")
-            except Exception as e:
-                logger.error(f"Failed to generate visualization: {str(e)}", exc_info=True)
-                return {"error": f"Failed to generate visualization: {str(e)}"}
-            
-            # Convert to GeoJSON
-            logger.info("Converting to GeoJSON...")
-            try:
-                raster_to_vector(output_image, output_geojson, None)
-                logger.success("Converted to GeoJSON successfully") 
-                
-                # Read GeoJSON content
-                logger.info("Reading GeoJSON content...")
-                try:
-                    with open(output_geojson, 'r') as f:
-                        geojson_content = json.load(f)
-                        
-                        if not geojson_content.get('features'):
-                            logger.warning(f"No {text_prompt} found in the specified area")
-                            return {"error": f"No {text_prompt} found in the specified area"}
-                        
-                        # Transform coordinates to lat/long 
-                        logger.info("Transforming coordinates to WGS84...")
-                        transformed_geojson = self.transform_coordinates(geojson_content)
-                        geojson_count = len(transformed_geojson.get('features', []))
-                        
-                        logger.success(f"Successfully found {geojson_count} features")
-                        return {
-                            "errors": None,
-                            "version": "1.0",
-                            "predictions": f"Successfully found {geojson_count} features",
-                            "geojson": transformed_geojson
-                        }
-                        
-                except Exception as e:
-                    logger.error(f"Failed to process GeoJSON output: {str(e)}", exc_info=True)
-                    return {"error": f"Failed to process GeoJSON output: {str(e)}"}
-                
-            except Exception as e:
-                logger.error(f"Failed to convert to GeoJSON: {str(e)}", exc_info=True)  
-                
-        finally:
-            # Clean up temporary files
-            logger.info("Cleaning up temporary files...")
-            for file in [input_image, output_image, output_geojson]:
-                if os.path.exists(file):    
-                    try:
-                        os.remove(file)
-                        logger.debug(f"Removed temporary file: {file}")
-                    except Exception as e:
-                        logger.warning(f"Failed to remove temporary file {file}: {str(e)}")     
+        return [min_lon, min_lat, max_lon, max_lat]
 
 
 # Create singleton instance
 predictor = SegmentationPredictor()
-predictor.setup()
+# predictor.setup()

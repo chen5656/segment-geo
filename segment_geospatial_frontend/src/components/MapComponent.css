@@ -20,7 +20,7 @@
 
 .map-container {
   position: relative;
-  height: 80vh;
+  height: 100vh;
   width: 100%;
 }
 
@@ -35,8 +35,45 @@
 
 .leaflet-draw-toolbar a {
   background-color: white;
+  border: 2px solid rgba(0, 0, 0, 0.2);
   border-radius: 4px;
-  margin-bottom: 4px;
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  margin-bottom: 5px;
+}
+
+.leaflet-draw-toolbar a:hover {
+  background-color: #f4f4f4;
+}
+
+/* Style for include points */
+.leaflet-draw-toolbar a.leaflet-draw-draw-marker {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="green"/><circle cx="12" cy="12" r="4" fill="white"/></svg>');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 20px;
+}
+
+/* Style for exclude points */
+.leaflet-draw-toolbar a.leaflet-draw-draw-markerExclude {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="red"><circle cx="12" cy="12" r="8"/></svg>');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 20px;
+}
+
+/* Active tool highlight */
+.leaflet-draw-toolbar a.leaflet-draw-toolbar-button-enabled {
+  background-color: #e6e6e6;
+  border-color: #999;
+}
+
+/* Disabled tools */
+.leaflet-draw-toolbar a.leaflet-draw-toolbar-button-disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 /* Make vertical tabs more compact */
@@ -147,7 +184,7 @@ input[type="file"] {
 }
 
 .leaflet-draw-draw-rectangle::before {
-  /* 使用自定义SVG */
+  /* Use custom SVG */
   content: '' !important;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/%3E%3C/svg%3E") !important;
   width: 18px !important;
@@ -161,7 +198,103 @@ input[type="file"] {
   background-repeat: no-repeat !important;
 }
 
-/* 悬停状态 */
+/* Hover state */
 .leaflet-draw-draw-rectangle:hover {
   background-color: #f4f4f4 !important;
+}
+
+.control-panel {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: white;
+  padding: 10px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  z-index: 1000;
+  min-width: 300px;
+}
+
+.input-group {
+  margin-bottom: 15px;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.input-group input[type="range"] {
+  width: 100%;
+}
+
+.error-message {
+  color: red;
+  margin-bottom: 10px;
+}
+
+button {
+  width: 100%;
+  padding: 8px;
+  margin-top: 10px;
+  background: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Style for marker buttons */
+.leaflet-draw-toolbar a.leaflet-draw-draw-marker {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="green"/><circle cx="12" cy="12" r="4" fill="white"/></svg>');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 20px;
+}
+
+.leaflet-draw-toolbar a.leaflet-draw-draw-circlemarker {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="red"/><path d="M8 8L16 16M8 16L16 8" stroke="white" stroke-width="2"/></svg>');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 20px;
+}
+
+.instruction-panel {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 15px;
+  border-radius: 8px;
+  margin: 10px 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.instruction-panel h3 {
+  margin-top: 0;
+  color: #2c3e50;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.instruction-panel h4 {
+  color: #34495e;
+  margin: 12px 0 8px;
+}
+
+.instruction-panel ol, 
+.instruction-panel ul {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.instruction-panel li {
+  margin: 4px 0;
+  line-height: 1.4;
+}
+
+.instruction-panel ul li {
+  list-style-type: disc;
 }
