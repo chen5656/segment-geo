@@ -1,9 +1,9 @@
 from typing import Union
-import asyncio
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from app.segment_geospatial.predict import predictor
 from loguru import logger
+from app.retry.retry import retry_prediction
 
 from app import __version__, schemas
 from app.config import settings
@@ -20,36 +20,25 @@ def health() -> dict:
     )
     return health.dict()
 
-async def retry_prediction(request: schemas.PredictionRequest, max_retries: int = 3, delay: float = 1.0):
+@api_router.post("/segment/text_prompt", 
+                response_model=Union[schemas.PredictionResults, schemas.ErrorResponse], 
+                status_code=200)
+async def segment_with_text_prompt(request: schemas.SegmentationWithTextPromptRequest):
     """
-    Retry the prediction with exponential backoff
+    Perform segmentation using a text prompt to identify target areas
     """
-    for attempt in range(max_retries):
-        try:
-            result = await predictor.make_prediction(
+    try:
+        # Create callback function that captures the request parameters
+        async def prediction_callback():
+            return await predictor.segment_with_text_prompt(
                 bounding_box=request.bounding_box,
                 text_prompt=request.text_prompt,
                 zoom_level=request.zoom_level,
                 box_threshold=request.box_threshold,
                 text_threshold=request.text_threshold,
             )
-            return result
-        except Exception as e:
-            if "Failed to download satellite imagery" in str(e):
-                if attempt < max_retries - 1:  # Don't sleep on the last attempt
-                    wait_time = delay * (2 ** attempt)  # Exponential backoff
-                    logger.warning(f"Attempt {attempt + 1} failed, retrying in {wait_time} seconds...")
-                    await asyncio.sleep(wait_time)
-                    continue
-            raise e
-    return None
-
-@api_router.post("/predict", 
-                response_model=Union[schemas.PredictionResults, schemas.ErrorResponse], 
-                status_code=200)
-async def predict(request: schemas.PredictionRequest):
-    try:
-        result = await retry_prediction(request)
+        
+        result = await retry_prediction(prediction_callback)
         
         if result is None:
             return JSONResponse(
@@ -81,6 +70,40 @@ async def predict(request: schemas.PredictionRequest):
 
     except Exception as e:
         logger.error(f"Error during prediction: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": {"message": str(e)}}
+        )
+
+@api_router.post("/segment/interactive", 
+                response_model=Union[schemas.SegmentationGeojsonResults, schemas.ErrorResponse], 
+                status_code=200)
+async def segment_interactive(request: schemas.SegmentationWithPointsRequest):
+    """
+    Perform interactive segmentation using include/exclude points
+    """
+    try:
+        async def points_prediction_callback():
+            return await predictor.segment_with_points(
+                bounding_box=request.bounding_box,
+                text_prompt=request.text_prompt,
+                zoom_level=request.zoom_level,
+                box_threshold=request.box_threshold,
+                points_include=request.points_include,
+                points_exclude=request.points_exclude
+            )
+            
+        result = await retry_prediction(points_prediction_callback)
+        
+        if result is None:
+            return JSONResponse(
+                status_code=400,
+                content={"error": {"message": "Failed to download satellite imagery after multiple retries"}}
+            )
+            
+        return result
+    except Exception as e:
+        logger.error(f"Error during segmentation with points: {str(e)}")
         return JSONResponse(
             status_code=500,
             content={"error": {"message": str(e)}}

@@ -4,14 +4,18 @@ import asyncio
 import glob
 import json
 from datetime import datetime
-import pytest, unittest
+
 
 # Add the project root directory to Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(project_root)
 
-from app.segment_geospatial.predict import predictor
-from app.schemas.predict import PredictionRequest
+from app.segment_geospatial.predict import SegmentationPredictor
+
+from segment_geospatial_api.app.schemas.segmentation import SegmentationWithTextPromptRequest, SegmentationWithPointsRequest
+
+predictor = SegmentationPredictor()
+predictor.setup("sam2-hiera-tiny")
 
 def save_geojson(data, prefix="test_result"):
     """Save GeoJSON data to a file with timestamp"""
@@ -30,9 +34,9 @@ def save_geojson(data, prefix="test_result"):
     print(f"GeoJSON saved to: {filepath}")
     return filepath
 
-async def call_predict(request: PredictionRequest):
+async def call_predict_segment_with_text_prompt(request: SegmentationWithTextPromptRequest):
     try:        
-        _result = await predictor.make_prediction(
+        _result = await predictor.segment_with_text_prompt(
             bounding_box=request.bounding_box,
             text_prompt=request.text_prompt,
             zoom_level=request.zoom_level,
@@ -62,10 +66,10 @@ if __name__ == "__main__":
     }
         
     
-    request = PredictionRequest(**request_data)
+    request = SegmentationWithTextPromptRequest(**request_data)
     
     # Run the async function
-    result = asyncio.run(call_predict(request))
+    result = asyncio.run(call_predict_segment_with_text_prompt(request))
     
     # Validate result structure
     assert result is not None
