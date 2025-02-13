@@ -19,7 +19,18 @@ class Settings(BaseSettings):
     logging: LoggingSettings = LoggingSettings()
 
     # Model Settings
-    DEFAULT_MODEL_TYPE: str = "sam2-hiera-base-plus"
+                # SAM 1 models:
+                # - "vit_h"
+                # - "vit_l"
+                # - "vit_b"
+                # SAM 2 models:
+                # - "sam2-hiera-tiny"
+                # - "sam2-hiera-small" 
+                # - "sam2-hiera-base-plus"
+                # - "sam2-hiera-large" (default)
+    DEFAULT_LANGSAM_MODEL_TYPE: str = "sam2-hiera-base-plus"
+    DEFAULT_SAMGEO_MODEL_TYPE: str = "vit_l"
+
     MAX_TILES_LIMIT: int = 1000  # Maximum number of tiles allowed for processing
 
     # BACKEND_CORS_ORIGINS is a comma-separated list of origins

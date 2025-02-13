@@ -89,7 +89,6 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-packages/car_evaluation_streamlit/venv
 
 # Spyder project settings
 .spyderproject
@@ -107,18 +106,6 @@ packages/car_evaluation_streamlit/venv
 # pycharm
 .idea/
 
-# trained models
-*.pkl
-packages/car_evaluation_model/car_evaluation_model/models/*.h5
-packages/car_evaluation_model/car_evaluation_model/models/*.pkl
-
-# datafiles
-*.csv
-data/*.csv
-packages/car_evaluation_model/car_evaluation_model/data/interim/*.csv
-packages/car_evaluation_model/car_evaluation_model/data/raw/*.csv
-packages/car_evaluation_model/car_evaluation_model/data/raw/*.data
-
 .my_data/
 *.tif
 *.geojson
@@ -128,3 +115,4 @@ packages/car_evaluation_model/car_evaluation_model/data/raw/*.data
 *.shp
 *.shx
 *.tif
+node_modules/

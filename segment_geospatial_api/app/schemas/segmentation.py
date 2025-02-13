@@ -57,16 +57,6 @@ class SegmentationWithTextPromptRequest(BaseModel):
 
 
 class SegmentationWithPointsRequest(BaseModel):
-    bounding_box: List[float] = Field(
-        default=[-96.81040, 32.97140, -96.81000, 32.97180],
-        description="Bounding box coordinates [west, south, east, north]",
-        example=[-96.81040, 32.97140, -96.81000, 32.97180]
-    )
-    text_prompt: str = Field(
-        default="trees",
-        description="Text description of the features to detect",
-        example="trees"
-    )
     zoom_level: int = Field(
         default=19,
         description="Zoom level for satellite imagery (1-20), 20 may not work",
@@ -82,22 +72,26 @@ class SegmentationWithPointsRequest(BaseModel):
     points_include: List[List[float]] = Field(
         default=[],
         description="List of points to include in the segmentation",
-        example=[[100, 100], [200, 200]]
+        example=[[-96.81040, 32.97140]]
     )
     points_exclude: List[List[float]] = Field(
         default=[],
         description="List of points to exclude from the segmentation",
-        example=[[100, 100], [200, 200]]
+        example=[[-96.81000, 32.97180]]
     )
     
     class Config:
         json_schema_extra = {
             "example": {
-                "bounding_box": [-96.81040, 32.97140, -96.81000, 32.97180],
-                "text_prompt": "trees",
-                "zoom_level": 19,
+                "zoom_level": 20,
                 "box_threshold": 0.24,
-                "points_include": [[100, 100], [200, 200]],
-                "points_exclude": [[300, 300], [400, 400]]
+                "points_include": [
+                    [-96.75957441329956, 32.77962558419501],
+                    [-96.76011219620706, 32.77979697101114],
+                    [-96.75975278019907, 32.780051795535265],
+                    [-96.75899103283884, 32.77942713589021],
+                    [-96.75938665866852, 32.779101273793295]
+                ],
+                "points_exclude": []
             }
         }   
