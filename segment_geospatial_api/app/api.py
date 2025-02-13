@@ -84,7 +84,7 @@ async def segment_with_text_prompt(request: schemas.SegmentationWithTextPromptRe
             content={"error": {"message": str(e)}}
         )
 
-@api_router.post("/segment/interactive", 
+@api_router.post("/segment/input_points_prompt", 
                response_model=Union[schemas.SegmentationGeojsonResults, schemas.ErrorResponse], 
                status_code=200)
 async def segment_interactive(request: schemas.SegmentationWithPointsRequest):
