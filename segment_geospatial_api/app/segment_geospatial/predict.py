@@ -31,22 +31,14 @@ logger.add(sys.stderr, level="INFO")
 class SegmentationPredictor:
     """Segmentation predictor class."""
     _instance = None
-    _initialized_langsam = False
-    _initialized_samgeo = False
     transformer = Transformer.from_crs("EPSG:3857", "EPSG:4326", always_xy=True)
-    DEFAULT_LANGSAM_MODEL_TYPE = settings.DEFAULT_LANGSAM_MODEL_TYPE
-    DEFAULT_SAMGEO_MODEL_TYPE = settings.DEFAULT_SAMGEO_MODEL_TYPE
     
-    # Validate model_type
-    VALID_MODEL_TYPES = [
-        # SAM 1 models
-        "vit_h", "vit_l", "vit_b",
-        # SAM 2 models
-        "sam2-hiera-tiny",
-        "sam2-hiera-small",
-        "sam2-hiera-base-plus", 
-        "sam2-hiera-large"
-    ]
+    # Use settings from config
+    LANGSAM_MODEL_TYPE = settings.LANGSAM_MODEL_TYPE
+    SAMGEO_MODEL_TYPE = settings.SAMGEO_MODEL_TYPE
+    logger.info(f"Using LangSAM model: {LANGSAM_MODEL_TYPE}")
+    logger.info(f"Using SamGeo model: {SAMGEO_MODEL_TYPE}")
+
 
     def __new__(cls):
         """Create a new instance if one doesn't exist."""
@@ -58,63 +50,54 @@ class SegmentationPredictor:
         """Empty init to maintain singleton pattern."""
         pass
 
-
-
-    def setup(self, text_model_type=DEFAULT_LANGSAM_MODEL_TYPE, samgeo_model_type=DEFAULT_SAMGEO_MODEL_TYPE):
+    def setup(self, setup_langsam=True, setup_samgeo=True):
         """Initialize the LangSAM model.
         
         Args:
-            model_type (str): The model type to use. Can be one of VALID_MODEL_TYPES
-        
-        Raises:
-            ValueError: If invalid model_type is provided.
-            RuntimeError: If model initialization fails.
+            setup_langsam (bool): Whether to set up the LangSAM model.
+            setup_samgeo (bool): Whether to set up the SamGeo model.
         """
         logger.info("Setting up SegmentationPredictor...")        
-
-        if not text_model_type and not samgeo_model_type:
-            raise ValueError("Text model type or SamGeo model type must be provided")
         
-        if text_model_type:
-            self.setup_langsam(text_model_type)
+        if setup_samgeo:
+            self.setup_langsam()
         
-        if samgeo_model_type:
-            self.setup_samgeo(samgeo_model_type)
+        if setup_langsam:
+            self.setup_samgeo()
 
 
-    def setup_samgeo(self, model_type):
-        if model_type not in self.VALID_MODEL_TYPES:
-            raise ValueError(
-                f"Invalid model_type: {model_type}. Must be one of: {self.VALID_MODEL_TYPES}"
-            )
-        else:
-            # Setup SamGeo model for point prompt
-            try:
-                logger.info(f"Initializing SamGeo model with type: {model_type}")
-                self._samgeo = SamGeo(model_type=model_type,
-                                        automatic=False,
-                                        sam_kwargs=None)
-                self._initialized_samgeo = True
-                logger.success("SamGeo model initialized successfully")
-            except Exception as e:
-                logger.error(f"Failed to initialize SamGeo model: {str(e)}")
-                raise RuntimeError(f"Failed to initialize LangSAM model: {str(e)}")
+    def setup_samgeo(self):
+        """Set up the SamGeo model.
+        
+        Raises:
+            RuntimeError: If model initialization fails.
+        """
 
-    def setup_langsam(self, model_type):
-        if model_type not in self.VALID_MODEL_TYPES:
-            raise ValueError(
-                f"Invalid model_type: {model_type}. Must be one of: {self.VALID_MODEL_TYPES}"
-            )
-        else:
-            # Setup LangSAM model for text prompt
-            try:
-                logger.info(f"Initializing LangSAM model with type: {model_type}")
-                self._langsam = LangSAM(model_type=model_type)
-                self._initialized_langsam = True
-                logger.success("LangSAM model initialized successfully")
-            except Exception as e:
-                logger.error(f"Failed to initialize LangSAM model: {str(e)}")
-                raise RuntimeError(f"Failed to initialize LangSAM model: {str(e)}")
+        # Setup SamGeo model for point prompt
+        try:
+            logger.info(f"Initializing SamGeo model, model_type: {self.SAMGEO_MODEL_TYPE}")
+            self._samgeo = SamGeo(model_type=self.SAMGEO_MODEL_TYPE,
+                                    automatic=False,
+                                    sam_kwargs=None)
+            logger.success("SamGeo model initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize SamGeo model: {str(e)}")
+            raise RuntimeError(f"Failed to initialize LangSAM model: {str(e)}")
+
+    def setup_langsam(self):
+        """Set up the LangSAM model.
+        
+        Raises:
+            RuntimeError: If model initialization fails.
+        """
+        # Setup LangSAM model for text prompt
+        try:
+            logger.info(f"Initializing LangSAM model, model_type: {self.LANGSAM_MODEL_TYPE}")
+            self._langsam = LangSAM(model_type=self.LANGSAM_MODEL_TYPE)
+            logger.success("LangSAM model initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize LangSAM model: {str(e)}")
+            raise RuntimeError(f"Failed to initialize LangSAM model: {str(e)}")
             
             
     @property
@@ -127,8 +110,8 @@ class SegmentationPredictor:
         Raises:
             RuntimeError: If model initialization fails.
         """
-        if not self._initialized_langsam:
-            self.setup(text_model_type=self.DEFAULT_LANGSAM_MODEL_TYPE, samgeo_model_type=None)  # Initialize with default model
+        if not self._langsam:
+            self.setup(setup_langsam=True, setup_samgeo=False)  # Initialize with default model
         return self._langsam
     
     @property
@@ -141,23 +124,30 @@ class SegmentationPredictor:
         Raises:
             RuntimeError: If model initialization fails.
         """
-        if not self._initialized_samgeo:
-            self.setup(text_model_type=None, samgeo_model_type=self.DEFAULT_SAMGEO_MODEL_TYPE)  # Initialize with default model
+        if not self._samgeo:
+            self.setup(setup_langsam=False, setup_samgeo=True)  # Initialize with default model
         return self._samgeo
 
     @staticmethod
     def count_tiles(bounding_box, zoom_level):
-        """Count the number of tiles needed for the given bounding box and zoom level."""
-        west, south, east, north = bounding_box
-
+        """Count the number of tiles needed for the given bounding box and zoom level.
+        
+        Args:
+            bounding_box: The bounding box to count tiles for.
+            zoom_level: The zoom level to count tiles for.
+            
+        Returns:
+            The number of tiles needed for the given bounding box and zoom level.
+        """
         def deg2num(lat, lon, zoom):
             lat_r = math.radians(lat)
             n = 2**zoom
-            xtile = (lon + 180) / 360 * n
-            ytile = (1 - math.log(math.tan(lat_r) + 1 / math.cos(lat_r)) / math.pi) / 2 * n
-            return xtile, ytile
+            x_tile = (lon + 180) / 360 * n
+            y_tile = (1 - math.log(math.tan(lat_r) + 1 / math.cos(lat_r)) / math.pi) / 2 * n
+            return x_tile, y_tile
 
         # Convert bounding box coordinates to tile coordinates
+        west, south, east, north = bounding_box
         x0, y0 = deg2num(south, west, zoom_level)
         x1, y1 = deg2num(north, east, zoom_level)
 
@@ -173,7 +163,14 @@ class SegmentationPredictor:
         return total_num
 
     def transform_coordinates(self, geojson_data):
-        """Transform coordinates from EPSG:3857 to EPSG:4326"""
+        """Transform coordinates from EPSG:3857 to EPSG:4326
+        
+        Args:
+            geojson_data: The GeoJSON data to transform.
+            
+        Returns:
+            The transformed GeoJSON data.
+        """
         if not geojson_data or 'features' not in geojson_data:
             return geojson_data
 
@@ -215,7 +212,15 @@ class SegmentationPredictor:
             self.transformer = None
             SegmentationPredictor._initialized = False
 
-    def download_satellite_image(self, image_name, bounding_box, zoom_level):
+    @staticmethod
+    def download_satellite_image(image_name, bounding_box, zoom_level):
+        """Download a satellite image for the given bounding box and zoom level.
+        
+        Args:
+            image_name: The name of the image to download.
+            bounding_box: The bounding box to download the image for.
+            zoom_level: The zoom level to download the image for.
+        """
         tms_to_geotiff(
             image_name,
             bounding_box,
@@ -226,6 +231,7 @@ class SegmentationPredictor:
 
     async def _process_segmentation(
         self,
+        type: str,
         input_image: str,
         output_image: str,
         output_geojson: str,
@@ -239,6 +245,7 @@ class SegmentationPredictor:
         Common processing logic for both text-based and point-based segmentation.
         
         Args:
+            type: Type of segmentation to perform
             input_image: Path to input satellite image
             output_image: Path to output visualization
             output_geojson: Path to output GeoJSON
@@ -257,10 +264,11 @@ class SegmentationPredictor:
             logger.info(f"Starting segmentation at {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
             
             # Run prediction based on segmentation type
-            if points is not None and point_labels is not None:                
-                # Add validation for input file path
-                if not os.path.exists(input_image):
-                    raise ValueError(f"Input image file not found: {input_image}")
+            if type == "input_points":
+                if points is not None and point_labels is not None:                
+                    # Add validation for input file path
+                    if not os.path.exists(input_image):
+                        raise ValueError(f"Input image file not found: {input_image}")
                 
                 # Ensure output paths are properly set
                 if not output_image or not output_geojson:
@@ -274,7 +282,10 @@ class SegmentationPredictor:
                     point_crs="EPSG:4326",
                     output=output_image,
                 )
-            elif text_prompt is not None:
+            elif type == "text":
+                if len(text_prompt)< 3:
+                    raise ValueError("Text prompt must be at least 3 characters long")
+                
                 logger.info(f"Running text-based prediction with prompt: '{text_prompt}'")
                 self.langsam.predict(
                     input_image,
@@ -375,6 +386,7 @@ class SegmentationPredictor:
             
             # Process segmentation
             result = await self._process_segmentation(
+                type="input_points",
                 input_image=input_image,
                 output_image=output_image,
                 output_geojson=output_geojson,
@@ -448,6 +460,7 @@ class SegmentationPredictor:
             
             # Process segmentation
             result = await self._process_segmentation(
+                type="text",
                 input_image=input_image,
                 output_image=output_image,
                 output_geojson=output_geojson,
@@ -467,7 +480,8 @@ class SegmentationPredictor:
                     except Exception as e:
                         logger.warning(f"Failed to remove temporary file {file}: {str(e)}")
 
-    def calculate_buffer_size(self, zoom_level: int) -> float:
+    @staticmethod
+    def calculate_buffer_size(zoom_level: int) -> float:
         """
         Calculate buffer size in degrees based on zoom level.
         The buffer size decreases as zoom level increases.
@@ -487,7 +501,8 @@ class SegmentationPredictor:
         
         return buffer_size
 
-    def calculate_bounding_box(self, points: List[List[float]], buffer_size: float) -> List[float]:
+    @staticmethod
+    def calculate_bounding_box(points: List[List[float]], buffer_size: float) -> List[float]:
         """
         Calculate bounding box from points with buffer.
         
@@ -509,4 +524,4 @@ class SegmentationPredictor:
 
 # Create singleton instance
 predictor = SegmentationPredictor()
-# predictor.setup()
+predictor.setup()
