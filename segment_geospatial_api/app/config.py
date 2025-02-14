@@ -19,11 +19,16 @@ class Settings(BaseSettings):
     logging: LoggingSettings = LoggingSettings()
 
     # Model Settings
-    LANGSAM_MODEL_TYPE: str = "sam2-hiera-small"  # default value if not in env
-    SAMGEO_MODEL_TYPE: str = "vit_b"  # default value if not in env
+    LANGSAM_MODEL_TYPE: str = "vit_h"  # default value if not in env
+    SAMGEO_MODEL_TYPE: str = "vit_h"  # default value if not in env
+
+    # Zoom Level Settings
+    MIN_ZOOM_LEVEL: int = 19
+    MAX_ZOOM_LEVEL: int = 22
 
     # Environment variables
     MAX_TILES_LIMIT: int = 1000  # Maximum number of tiles allowed for processing
+    BUFFER_DEGREES_FOR_POINT_PREDICTION: float = 0.001  # 设置为与notebook相同的值
 
     # BACKEND_CORS_ORIGINS is a comma-separated list of origins
     # e.g: http://localhost,http://localhost:4200,http://localhost:3000
