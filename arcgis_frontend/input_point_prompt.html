@@ -200,7 +200,7 @@
 
       // Create graphics layer for points with a title
       const pointsLayer = new GraphicsLayer({
-        title: "Drawing Points Graphic Layer"  // Add title to avoid "untitledG rao p
+        title: "Drawing Points Graphic Layer"  
       });
       map.add(pointsLayer);
 
@@ -452,7 +452,7 @@
           const result = await response.json();
           
           // Create new feature layer from GeoJSON
-          const layerName = `Detection Result ${resultLayers.length + 1}`;
+          const layerName = `Detection Result ${includePoints.length} include points and ${excludePoints.length} exclude points`;
           
           // Convert GeoJSON features to graphics
           const graphics = result.features.map(feature => {
@@ -547,7 +547,7 @@
     </div>
 
     <div class="button-group">
-      <button id="includeMode" class="mode-button active">Include Points</button>
+      <button id="includeMode" class="mode-button">Include Points</button>
       <button id="excludeMode" class="mode-button">Exclude Points</button>
       <button id="deleteMode" class="mode-button">Delete Points</button>
     </div>
