@@ -1,7 +1,7 @@
 from typing import Union, List
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
-from app.segment_geospatial.predict import predictor
+from app.predict.predict import predictor
 from loguru import logger
 from app.retry.retry import retry_prediction
 import numpy as np

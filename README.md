@@ -69,7 +69,7 @@ docker-compose -f docker-compose.dev.yml up
 
 ### Manual Start
 
-1. Start the Backend:
+1. Start the Backend for development:
 ```bash
 conda activate geo_env
 cd segment_geospatial_api

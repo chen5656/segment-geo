@@ -183,8 +183,9 @@
       "esri/widgets/Sketch",
       "esri/layers/FeatureLayer",
       "esri/widgets/LayerList",
-      "esri/Graphic"
-    ], function(Map, MapView, GraphicsLayer, Sketch, FeatureLayer, LayerList, Graphic) {
+      "esri/Graphic",
+      "esri/widgets/Search"
+    ], function(Map, MapView, GraphicsLayer, Sketch, FeatureLayer, LayerList, Graphic, Search) {
       
       // Create map and view
       const map = new Map({
@@ -196,6 +197,13 @@
         map: map,
         zoom: 19,
         center: [-96.7970, 32.7767] // Dallas coordinates
+      });
+      
+      const searchWidget = new Search({
+        view: view
+      });
+      view.ui.add(searchWidget, {
+        position: "top-left"
       });
 
       // Create graphics layer for points with a title
