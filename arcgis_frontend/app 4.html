@@ -786,7 +786,8 @@
 
           // Add click handler for points
           this.view.on("click", (event) => {
-            if (!this.panelVisible || this.panel.querySelector('#points-tab').classList.contains('active') === false) {
+            // Only handle clicks when points tab is active
+            if (!this.panelVisible || !this.panel.querySelector('#points-tab').classList.contains('active')) {
               return;
             }
 
@@ -877,18 +878,14 @@
             this.resetPointsSettings();
           });
 
-          // 在setupEventListeners方法中修改点检测相关的事件处理
+          // Point mode buttons
           this.panel.querySelector('#includeMode').addEventListener('click', () => {
             if (this.deleteMode) {
               this.deleteMode = false;
             }
             this.currentMode = this.currentMode === 'include' ? null : 'include';
             updateButtonStates();
-            if (this.currentMode === null) {
-              this.view.cursor = "default";
-            } else {
-              this.view.cursor = "crosshair";
-            }
+            this.view.cursor = this.currentMode ? "crosshair" : "default";
           });
 
           this.panel.querySelector('#excludeMode').addEventListener('click', () => {
@@ -897,11 +894,7 @@
             }
             this.currentMode = this.currentMode === 'exclude' ? null : 'exclude';
             updateButtonStates();
-            if (this.currentMode === null) {
-              this.view.cursor = "default";
-            } else {
-              this.view.cursor = "crosshair";
-            }
+            this.view.cursor = this.currentMode ? "crosshair" : "default";
           });
 
           this.panel.querySelector('#deleteMode').addEventListener('click', () => {
@@ -1175,7 +1168,7 @@
         updatePointsStyle() {
           this.pointsLayer.removeAll();
           
-          // Add include points (绿色)
+          // Add include points (green)
           this.includePoints.forEach(coords => {
             const point = {
               type: "point",
@@ -1183,24 +1176,26 @@
               latitude: coords[1]
             };
             
-            const markerGraphic = new Graphic({
-              geometry: point,
-              symbol: {
-                type: "simple-marker",
-                style: "circle",
-                color: [0, 255, 0, 0.8], // 绿色
-                size: "12px",
-                outline: {
-                  color: [255, 255, 255, 0.8], // 白色边框
-                  width: 2
-                }
+            const markerSymbol = {
+              type: "simple-marker",
+              style: "circle",
+              color: [0, 255, 0, 0.8],  // Green
+              size: "12px",
+              outline: {
+                color: [255, 255, 255, 0.8],
+                width: 2
               }
+            };
+            
+            const graphic = new Graphic({
+              geometry: point,
+              symbol: markerSymbol
             });
             
-            this.pointsLayer.add(markerGraphic);
+            this.pointsLayer.add(graphic);
           });
 
-          // Add exclude points (红色)
+          // Add exclude points (red)
           this.excludePoints.forEach(coords => {
             const point = {
               type: "point",
@@ -1208,21 +1203,23 @@
               latitude: coords[1]
             };
             
-            const markerGraphic = new Graphic({
-              geometry: point,
-              symbol: {
-                type: "simple-marker",
-                style: "circle",
-                color: [255, 0, 0, 0.8], // 红色
-                size: "12px",
-                outline: {
-                  color: [255, 255, 255, 0.8], // 白色边框
-                  width: 2
-                }
+            const markerSymbol = {
+              type: "simple-marker",
+              style: "circle",
+              color: [255, 0, 0, 0.8],  // Red
+              size: "12px",
+              outline: {
+                color: [255, 255, 255, 0.8],
+                width: 2
               }
+            };
+            
+            const graphic = new Graphic({
+              geometry: point,
+              symbol: markerSymbol
             });
             
-            this.pointsLayer.add(markerGraphic);
+            this.pointsLayer.add(graphic);
           });
         }
 
@@ -1507,9 +1504,11 @@
         }
 
         updatePointsGraphics() {
+          if (!this.pointsLayer) return;
+          
           this.pointsLayer.removeAll();
           
-          // Add include points (绿色)
+          // Add include points (green)
           this.includePoints.forEach(coords => {
             const point = {
               type: "point",
@@ -1517,24 +1516,26 @@
               latitude: coords[1]
             };
             
-            const markerGraphic = new Graphic({
-              geometry: point,
-              symbol: {
-                type: "simple-marker",
-                style: "circle",
-                color: [0, 255, 0, 0.8], // 绿色
-                size: "12px",
-                outline: {
-                  color: [255, 255, 255, 0.8], // 白色边框
-                  width: 2
-                }
+            const markerSymbol = {
+              type: "simple-marker",
+              style: "circle",
+              color: [0, 255, 0, 0.8],  // Green
+              size: "12px",
+              outline: {
+                color: [255, 255, 255, 0.8],
+                width: 2
               }
+            };
+            
+            const graphic = new Graphic({
+              geometry: point,
+              symbol: markerSymbol
             });
             
-            this.pointsLayer.add(markerGraphic);
+            this.pointsLayer.add(graphic);
           });
 
-          // Add exclude points (红色)
+          // Add exclude points (red)
           this.excludePoints.forEach(coords => {
             const point = {
               type: "point",
@@ -1542,21 +1543,23 @@
               latitude: coords[1]
             };
             
-            const markerGraphic = new Graphic({
-              geometry: point,
-              symbol: {
-                type: "simple-marker",
-                style: "circle",
-                color: [255, 0, 0, 0.8], // 红色
-                size: "12px",
-                outline: {
-                  color: [255, 255, 255, 0.8], // 白色边框
-                  width: 2
-                }
+            const markerSymbol = {
+              type: "simple-marker",
+              style: "circle",
+              color: [255, 0, 0, 0.8],  // Red
+              size: "12px",
+              outline: {
+                color: [255, 255, 255, 0.8],
+                width: 2
               }
+            };
+            
+            const graphic = new Graphic({
+              geometry: point,
+              symbol: markerSymbol
             });
             
-            this.pointsLayer.add(markerGraphic);
+            this.pointsLayer.add(graphic);
           });
         }
       };
