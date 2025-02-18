@@ -135,24 +135,44 @@ class SegmentationPredictor:
 
         try:
             self.text_predictor.download_satellite_image(input_image, bounding_box, zoom_level)
+            logger.info(f"Downloaded satellite image.")
             await self.text_predictor.predict(input_image, text_prompt, box_threshold, text_threshold, output_image)
+            logger.info(f"Predication finished.")            
             
-            # Convert to GeoJSON
-            raster_to_vector(output_image, output_geojson, None)
-            
-            with open(output_geojson, 'r') as f:
-                geojson_content = json.load(f)
+            try:
+                raster_to_vector(output_image, output_geojson, None)
+                logger.info(f"Converted prediction to vector.")
+
+                with open(output_geojson, 'r') as f:
+                    geojson_content = json.load(f)
+            except Exception as e:
+                logger.warning(f"No features found in prediction: {str(e)}")
+                # Return empty feature collection if no features found
+                return {
+                    "errors": None,
+                    "version": "1.0",
+                    "predictions": "No features found",
+                    "geojson": {
+                        "type": "FeatureCollection",
+                        "features": []
+                    }
+                }
                 
             transformed_geojson = self.text_predictor.transform_coordinates(geojson_content)
-
-            logger.info(f"Found {len(transformed_geojson['features'])} features")
+            feature_count = len(transformed_geojson.get('features', []))
+            logger.info(f"Found {feature_count} features")
             
             return {
                 "errors": None,
                 "version": "1.0",
-                "predictions": f"Successfully processed",
+                "predictions": "Successfully processed" if feature_count > 0 else "No features found",
                 "geojson": transformed_geojson
             }
+        
+        except Exception as e:
+            logger.error(f"Error in segment_with_text_prompt: {str(e)}")
+            raise
+
         finally:
             # Clean up temporary files
             for file in [input_image, output_image, output_geojson]:

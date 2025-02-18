@@ -53,14 +53,20 @@ class TestSegmentationPredictor:
 
 if __name__ == "__main__":
 
+
     bounding_box = [-96.78806887088176,32.76760907972303,-96.78423468921088,32.769729127062774]
+    bounding_box = [-104.99973588492506,39.753106558884284,-104.9969463875492,39.75455413892476]
+    bounding_box = [-104.99973588492506,39.753106558884284,-104.9969463875492,39.75455413892476]
+    bounding_box = [-76.14878853603665,43.04631460392694,-76.14757617756175,43.04701633868996]
+
+
 
     request_data = {         
         "bounding_box": bounding_box,
         "text_prompt": "buildings",
-        "zoom_level": 21,
-        "box_threshold": 0.4,
-        "text_threshold": 0.24,
+        "zoom_level": 22,
+        "box_threshold": 0.57,
+        "text_threshold": 0.55,
     }
         
     request = SegmentationWithTextPromptRequest(**request_data)
