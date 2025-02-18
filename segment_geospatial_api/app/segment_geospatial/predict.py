@@ -1,4 +1,4 @@
-from samgeo import tms_to_geotiff, raster_to_geojson, raster_to_vector
+from samgeo import tms_to_geotiff, raster_to_vector
 from samgeo.text_sam import LangSAM
 import uuid
 import json
@@ -10,7 +10,6 @@ import itertools
 import os
 from pyproj import Transformer
 from app.config import settings
-import inspect
 
 # Configure loguru logger
 logger.remove()  # Remove default handler
@@ -46,13 +45,10 @@ class SegmentationPredictor:
     def setup(self, model_type=DEFAULT_MODEL_TYPE):
         """Initialize the LangSAM model."""
         logger.info("Initializing LangSAM model...")
-        print(f"\n[Setup] model_type: {model_type}")
         
         try:
-            print(f"\n[Loading Model] model_type: {model_type}")
+            logger.info(f"\n[Loading Model] model_type: {model_type}")
             self._sam = LangSAM(model_type=model_type)
-            print(f"[Model Loaded] Model attributes: {dir(self._sam)}")
-            print(f"[Model Loaded] Model type: {type(self._sam)}")
             
             self.transformer = Transformer.from_crs("EPSG:3857", "EPSG:4326", always_xy=True)
             self._initialized = True
@@ -164,64 +160,50 @@ class SegmentationPredictor:
         zoom_level: int = 20
     ) -> Dict[str, Any]:
         """Make a prediction using SAM."""
-        print("\n[Predict] Parameters:")
-        print(f"- bounding_box: {bounding_box}")
-        print(f"- text_prompt: {text_prompt}")
-        print(f"- box_threshold: {box_threshold} (type: {type(box_threshold)})")
-        print(f"- text_threshold: {text_threshold} (type: {type(text_threshold)})")
-        print(f"- zoom_level: {zoom_level}")
+        logger.info("\n[Predict] Parameters:")
+        logger.info(f"- bounding_box: {bounding_box}")
+        logger.info(f"- text_prompt: {text_prompt}")
+        logger.info(f"- box_threshold: {box_threshold} (type: {type(box_threshold)})")
+        logger.info(f"- text_threshold: {text_threshold} (type: {type(text_threshold)})")
+        logger.info(f"- zoom_level: {zoom_level}")
 
         # Generate unique filenames
         request_id = str(uuid.uuid4())
         input_image = f"satellite_{request_id}.tif"
         output_image = f"segment_{request_id}.tif"
         output_geojson = f"segment_{request_id}.geojson"
-        
-        print(f"\n[Files] Generated filenames:")
-        print(f"- input_image: {input_image}")
-        print(f"- output_image: {output_image}")
-        print(f"- output_geojson: {output_geojson}")
-        
+                
         try:
             # Download satellite imagery
-            print("\n[Download] Downloading satellite imagery...")
+            logger.info("\n[Download] Downloading satellite imagery...")
             try:
                 self.download_satellite_image(
                     input_image,
                     bounding_box,
                     zoom_level
                 )
-                print("[Download] Satellite imagery downloaded successfully")
+                logger.success("[Download] Satellite imagery downloaded successfully")
             except Exception as e:
-                print(f"[Error] Failed to download satellite imagery: {str(e)}")
+                logger.error(f"[Error] Failed to download satellite imagery: {str(e)}")
                 raise
 
             # Run prediction
-            print("\n[Predict] Running SAM prediction...")
-            try:
-                # 打印predict方法的签名
-                predict_signature = inspect.signature(self.sam.predict)
-                print(f"[Method Signature] predict: {predict_signature}")
-                
+            logger.info("\n[Predict] Running SAM prediction...")
+            try:                
                 self.sam.predict(
                     input_image, 
                     text_prompt, 
                     box_threshold,
                     text_threshold
                 )
-                print("[Predict] SAM prediction completed successfully")
-            except Exception as e:
-                print(f"[Error] Failed to run prediction: {str(e)}")
-                print(f"[Error] Exception type: {type(e)}")
+                logger.success("[Predict] SAM prediction completed successfully")
+            except Exception:
+                logger.error("[Error] Failed to run SAM prediction")
                 raise
             
             # Generate visualization
-            print("\n[Visualize] Generating visualization...")
-            try:
-                # 打印show_anns方法的签名
-                show_anns_signature = inspect.signature(self.sam.show_anns)
-                print(f"[Method Signature] show_anns: {show_anns_signature}")
-                
+            logger.info("\n[Visualize] Generating visualization...")
+            try:                
                 self.sam.show_anns(
                     cmap="Greys_r",
                     add_boxes=False,
@@ -230,30 +212,28 @@ class SegmentationPredictor:
                     blend=False,
                     output=output_image,
                 )
-                print("[Visualize] Visualization completed")
-            except Exception as e:
-                print(f"[Error] Failed to generate visualization: {str(e)}")
+                logger.success("[Visualize] Visualization generated successfully")
+            except Exception:
+                logger.error("[Error] Failed to generate visualization")
                 raise
-            
+
             # Convert to GeoJSON
-            print("\n[Convert] Converting to GeoJSON...")
             try:
                 raster_to_vector(output_image, output_geojson, None)
-                print("[Convert] Converted to GeoJSON successfully")
+                logger.success("[Convert] GeoJSON converted successfully")
             except Exception as e:
-                print(f"[Error] Failed to convert to GeoJSON: {str(e)}")
-                raise
+                logger.error(f"[Error] Failed to convert to GeoJSON: No vector data found in the image")
+                raise Exception("No vector data found in the image")
             
             # Read and process GeoJSON
-            print("\n[Process] Processing GeoJSON...")
             try:
                 with open(output_geojson, 'r') as f:
                     geojson_content = json.load(f)
-                print(f"[Process] Loaded GeoJSON with {len(geojson_content.get('features', []))} features")
+                logger.info(f"[Process] Loaded GeoJSON with {len(geojson_content.get('features', []))} features")
                 
                 transformed_geojson = self.transform_coordinates(geojson_content)
                 geojson_count = len(transformed_geojson.get('features', []))
-                print(f"[Process] Transformed {geojson_count} features to WGS84")
+                logger.info(f"[Process] Transformed {geojson_count} features to WGS84")
                 
                 return {
                     "errors": None,
@@ -263,24 +243,23 @@ class SegmentationPredictor:
                 }
                 
             except Exception as e:
-                print(f"[Error] Failed to process GeoJSON: {str(e)}")
+                logger.error(f"[Error] Failed to process GeoJSON: {str(e)}")
                 raise
             
         except Exception as e:
-            print(f"\n[Error] Exception occurred: {str(e)}")
-            print(f"[Error] Exception type: {type(e)}")
+            logger.error(f"\n[Error] Exception occurred: {str(e)}")
             return {"error": str(e)}
             
         finally:
             # Clean up temporary files
-            print("\n[Cleanup] Removing temporary files...")
+            logger.info("\n[Cleanup] Removing temporary files...")
             for file in [input_image, output_image, output_geojson]:
                 if os.path.exists(file):
                     try:
                         os.remove(file)
-                        print(f"[Cleanup] Removed: {file}")
+                        logger.info(f"[Cleanup] Removed: {file}")
                     except Exception as e:
-                        print(f"[Cleanup] Failed to remove {file}: {str(e)}")
+                        logger.error(f"[Cleanup] Failed to remove {file}: {str(e)}")
 
 
 # Create singleton instance

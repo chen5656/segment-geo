@@ -16,9 +16,6 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <div className="App">
-        <header className="App-header">
-          <h1>Map Object Detection</h1>
-        </header>
         <main>
           <MapComponent
             center={[32.7767, -96.7970]}
