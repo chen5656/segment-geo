@@ -104,6 +104,31 @@ class SegmentationPredictor:
                     "suggestion": "Try reducing the area or zoom level"
                 }
             )
+    
+    def tif_to_geojson(self, tif_file, geojson_file):
+        """Convert a tif file to a geojson file"""
+        
+        try:
+            raster_to_vector(tif_file, geojson_file, None)
+            logger.info(f"Converted prediction to vector.")
+
+            with open(geojson_file, 'r') as f:
+                geojson_content = json.load(f)
+        except Exception as e:
+            logger.warning(f"No features found in prediction: {str(e)}")
+            # Return empty feature collection if no features found
+            return {
+                "errors": None,
+                "version": "1.0",
+                "predictions": "No features found",
+                "geojson": {
+                    "type": "FeatureCollection",
+                    "features": []
+                }
+            }
+        
+        transformed_geojson = self.text_predictor.transform_coordinates(geojson_content)
+        return transformed_geojson
 
     async def segment_with_text_prompt(self, *, bounding_box, text_prompt, box_threshold=0.3, text_threshold=0.3, zoom_level=20):
         """Make a prediction using text prompt"""
@@ -135,24 +160,26 @@ class SegmentationPredictor:
 
         try:
             self.text_predictor.download_satellite_image(input_image, bounding_box, zoom_level)
+            logger.info(f"Downloaded satellite image.")
             await self.text_predictor.predict(input_image, text_prompt, box_threshold, text_threshold, output_image)
-            
-            # Convert to GeoJSON
-            raster_to_vector(output_image, output_geojson, None)
-            
-            with open(output_geojson, 'r') as f:
-                geojson_content = json.load(f)
-                
-            transformed_geojson = self.text_predictor.transform_coordinates(geojson_content)
+            logger.info(f"Predication finished.")            
 
-            logger.info(f"Found {len(transformed_geojson['features'])} features")
+                
+            geojson = self.tif_to_geojson(output_image, output_geojson)
+            feature_count = len(geojson.get('features', []))
+            logger.info(f"Found {feature_count} features")
             
             return {
                 "errors": None,
                 "version": "1.0",
-                "predictions": f"Successfully processed",
-                "geojson": transformed_geojson
+                "predictions": "Successfully processed" if feature_count > 0 else "No features found",
+                "geojson": geojson
             }
+        
+        except Exception as e:
+            logger.error(f"Error in segment_with_text_prompt: {str(e)}")
+            raise
+
         finally:
             # Clean up temporary files
             for file in [input_image, output_image, output_geojson]:
@@ -202,21 +229,16 @@ class SegmentationPredictor:
             
             await self.point_predictor.predict(input_image, points_include + (points_exclude or []), point_labels, box_threshold, output_image)
             
-            # Convert to GeoJSON
-            raster_to_vector(output_image, output_geojson, None)
-            
-            with open(output_geojson, 'r') as f:
-                geojson_content = json.load(f)
                 
-            transformed_geojson = self.point_predictor.transform_coordinates(geojson_content)
-            
-            logger.info(f"Found {len(transformed_geojson['features'])} features")
+            geojson = self.tif_to_geojson(output_image, output_geojson)
+            feature_count = len(geojson.get('features', []))
+            logger.info(f"Found {feature_count} features")
             
             return {
                 "errors": None,
                 "version": "1.0",
                 "predictions": f"Successfully processed",
-                "geojson": transformed_geojson
+                "geojson": geojson
             }
         finally:
             # Clean up temporary files

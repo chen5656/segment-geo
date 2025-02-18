@@ -19,8 +19,8 @@ class Settings(BaseSettings):
     logging: LoggingSettings = LoggingSettings()
 
     # Model Settings
-    LANGSAM_MODEL_TYPE: str = "vit_h"  # default value if not in env
-    SAMGEO_MODEL_TYPE: str = "vit_h"  # default value if not in env
+    LANGSAM_MODEL_TYPE: str = "vit_b"  # default value if not in env
+    SAMGEO_MODEL_TYPE: str = "vit_b"  # default value if not in env
 
     # Zoom Level Settings
     MIN_ZOOM_LEVEL: int = 19
