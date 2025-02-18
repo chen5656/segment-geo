@@ -1,13 +1,14 @@
-from samgeo import raster_to_vector
-from samgeo.text_sam import LangSAM
+from samgeo import raster_to_vector, SamGeo
 import uuid
 import json
 from typing import Dict, Any
 from loguru import logger
 import sys
 import os
-from app.config import settings 
-from app.segment_geospatial.utils import transform_coordinates, download_satellite_image
+from pyproj import Transformer
+from app.config import settings
+import numpy as np
+from app.segment_geospatial.utils import transform_coordinates, download_satellite_image, calculate_bounding_box
 # Configure loguru logger
 logger.remove()  # Remove default handler
 logger.add(
@@ -23,16 +24,17 @@ logger.add(
 logger.add(sys.stderr, level="INFO")
 
 
-class TextPredictor:
-    """Segmentation predictor class."""
+class PointPredictor:
+    """Segmentation predictor class that supports both text and point-based prediction."""
     _instance = None
     _initialized = False
-    DEFAULT_MODEL_TYPE = settings.DEFAULT_TEXT_MODEL_TYPE
+    DEFAULT_MODEL_TYPE = settings.DEFAULT_POINT_MODEL_TYPE  # Add point model type
+    DEFAULT_BUFFER_SIZE = settings.BUFFER_DEGREES_FOR_POINT_PREDICTION
     
     def __new__(cls):
         """Create a new instance if one doesn't exist."""
         if cls._instance is None:
-            cls._instance = super(TextPredictor, cls).__new__(cls)
+            cls._instance = super(PointPredictor, cls).__new__(cls)
         return cls._instance
 
     def __init__(self):
@@ -40,18 +42,24 @@ class TextPredictor:
         pass
 
     def setup(self, model_type=DEFAULT_MODEL_TYPE):
-        """Initialize the LangSAM model."""
-        logger.info("Initializing LangSAM model...")
+        """Initialize both LangSAM and SamGeo models."""
+        logger.info("Initializing models...")
         
-        try:
-            logger.info(f"\n[Loading Model] model_type: {model_type}")
-            self._sam = LangSAM(model_type=model_type)
+        try:            
+            # Initialize point-based model
+            logger.info(f"\n[Loading Point Model] model_type: {self.DEFAULT_MODEL_TYPE}")
+            self._sam = SamGeo(
+                model_type=model_type,
+                automatic=False,
+                sam_kwargs=None
+            )
             
+            self.transformer = Transformer.from_crs("EPSG:3857", "EPSG:4326", always_xy=True)
             self._initialized = True
-            logger.success("LangSAM model initialized successfully")
+            logger.success("Models initialized successfully")
         except Exception as e:
-            logger.error(f"Failed to initialize LangSAM model: {str(e)}")
-            raise RuntimeError(f"Failed to initialize LangSAM model: {str(e)}")
+            logger.error(f"Failed to initialize models: {str(e)}")
+            raise RuntimeError(f"Failed to initialize models: {str(e)}")
 
     @property
     def sam(self):
@@ -67,39 +75,27 @@ class TextPredictor:
             self.setup()  # Initialize with default model
         return self._sam
 
-
-        # Update CRS to WGS84
-        geojson_data['crs'] = {
-            "type": "name",
-            "properties": {
-                "name": "urn:ogc:def:crs:EPSG::4326"
-            }
-        }
-        return geojson_data
-
     def __del__(self):
         """Cleanup when instance is deleted."""
         if hasattr(self, '_sam'):
             logger.info("Cleaning up SegmentationPredictor instance")
             self._sam = None
-            TextPredictor._initialized = False
-
+            self.transformer = None
+            PointPredictor._initialized = False
 
     async def make_prediction(
-        self, 
-        *, 
-        bounding_box: list, 
-        text_prompt: str, 
+        self,
+        *,
+        points_include: list,
+        points_exclude: list = None,
         box_threshold: float = 0.3,
-        text_threshold: float = 0.3,
         zoom_level: int = 20
     ) -> Dict[str, Any]:
-        """Make a prediction using SAM."""
-        logger.info("\n[Predict] Parameters:")
-        logger.info(f"- bounding_box: {bounding_box}")
-        logger.info(f"- text_prompt: {text_prompt}")
-        logger.info(f"- box_threshold: {box_threshold} (type: {type(box_threshold)})")
-        logger.info(f"- text_threshold: {text_threshold} (type: {type(text_threshold)})")
+        """Make a prediction using points."""
+        logger.info("\n[Point Predict] Parameters:")
+        logger.info(f"- points_include: {points_include}")
+        logger.info(f"- points_exclude: {points_exclude}")
+        logger.info(f"- box_threshold: {box_threshold}")
         logger.info(f"- zoom_level: {zoom_level}")
 
         # Generate unique filenames
@@ -107,6 +103,12 @@ class TextPredictor:
         input_image = f"satellite_{request_id}.tif"
         output_image = f"segment_{request_id}.tif"
         output_geojson = f"segment_{request_id}.geojson"
+
+
+        
+        all_points = points_include + (points_exclude or [])
+        
+        bounding_box = calculate_bounding_box(all_points, self.DEFAULT_BUFFER_SIZE)
                 
         try:
             # Download satellite imagery
@@ -122,46 +124,30 @@ class TextPredictor:
                 logger.error(f"[Error] Failed to download satellite imagery: {str(e)}")
                 raise
 
-            # Run prediction
-            logger.info("\n[Predict] Running SAM prediction...")
-            try:                
+            # Run point-based prediction
+            logger.info("\n[Predict] Running point-based prediction...")
+            try:
+                all_points = points_include + (points_exclude or [])
+                point_labels = [1] * len(points_include) + [-1] * len(points_exclude or [])
+                
+                self.sam.set_image(input_image)
                 self.sam.predict(
-                    input_image, 
-                    text_prompt, 
-                    box_threshold,
-                    text_threshold
+                    point_coords=np.array(all_points),
+                    point_labels=np.array(point_labels),
+                    point_crs="EPSG:4326",
+                    box_threshold=box_threshold,
+                    output=output_image
                 )
-                logger.success("[Predict] SAM prediction completed successfully")
-            except Exception:
-                logger.error("[Error] Failed to run SAM prediction")
-                raise
-            
-            # Generate visualization
-            logger.info("\n[Visualize] Generating visualization...")
-            try:                
-                self.sam.show_anns(
-                    cmap="Greys_r",
-                    add_boxes=False,
-                    alpha=1,
-                    title=f"Automatic Segmentation of {text_prompt}",
-                    blend=False,
-                    output=output_image,
-                )
-                logger.success("[Visualize] Visualization generated successfully")
-            except Exception:
-                logger.error("[Error] Failed to generate visualization")
+                logger.success("[Predict] Point-based prediction completed successfully")
+            except Exception as e:
+                logger.error(f"[Error] Failed to run point-based prediction: {str(e)}")
                 raise
 
-            # Convert to GeoJSON
+            # Convert to GeoJSON and process
             try:
                 raster_to_vector(output_image, output_geojson, None)
                 logger.success("[Convert] GeoJSON converted successfully")
-            except Exception as e:
-                logger.error(f"[Error] Failed to convert to GeoJSON: No vector data found in the image")
-                raise Exception("No vector data found in the image")
-            
-            # Read and process GeoJSON
-            try:
+                
                 with open(output_geojson, 'r') as f:
                     geojson_content = json.load(f)
                 logger.info(f"[Process] Loaded GeoJSON with {len(geojson_content.get('features', []))} features")
@@ -198,5 +184,5 @@ class TextPredictor:
 
 
 # Create singleton instance
-textPredictor = TextPredictor()
-textPredictor.setup()
+pointPredictor = PointPredictor()
+pointPredictor.setup()
