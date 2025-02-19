@@ -275,6 +275,20 @@
           
         }
 
+        clear(){
+          if (this.pointsSketch) {
+            this.pointsSketch.cancel();
+          }
+          if (this.textSketch) {
+            this.textSketch.cancel();
+          }
+          this.detectionParameters.geometry = null;
+          this.detectionParameters.layer.removeAll();
+          this.includePoints = [];
+          this.excludePoints = [];
+          this.pointsLayer.removeAll();
+        }
+
         setupPointsSketch() {
           if (this.pointsSketch) {
             this.pointsSketch.destroy();
@@ -355,18 +369,6 @@
               this.detectionParameters.geometry = event.graphic.geometry;
             }
           });
-        }
-
-        // Update show method to initialize correct sketch
-        show() {
-          this.panel.style.display = 'block';
-          this.panelVisible = true;
-          
-          // Initialize sketch based on active tab
-          const activeTab = this.panel.querySelector('.tab-btn.active').dataset.tab;
-          if (activeTab === 'text') {
-            this.setupTextSketch();
-          }
         }
 
         createPanel() {
@@ -843,16 +845,7 @@
               this.panel.querySelector(`#${tabId}-tab`).classList.add('active');
 
               // Handle sketch tools based on active tab
-              //clear
-                if (this.pointsSketch) {
-                  this.pointsSketch.cancel();
-                }
-              if (this.textSketch) {
-                  this.textSketch.cancel();
-              }
-              this.pointsLayer.removeAll();
-              this.includePoints = [];
-              this.excludePoints = [];
+              this.clear()
 
               if (tabId === 'text') {
                 if (!this.textSketch) {
@@ -864,7 +857,7 @@
                 }              
                 // Reset point mode buttons
                 this.currentMode = null;
-                this.updateButtonStates();
+                updateButtonStates;
               }
             });
           });
@@ -1651,37 +1644,11 @@
       toolButton.addEventListener("click", () => {
         let toolActive = (toolButton.textContent === "Activate Object Detection Tool");
         toolButton.textContent = toolActive ? "Deactivate Tool" : "Activate Object Detection Tool";
-        let sketch;
         if (toolActive) {
           objectDetectionPanel.show();
-          sketch = new Sketch({
-            layer: detectionLayer,
-            view: view,
-            container: "sketch_container",
-            availableCreateTools: ["rectangle"],
-            visibleElements: {
-              selectionTools: {
-                "lasso-selection": false,
-                "rectangle-selection": false,
-              },
-              settingsMenu: false,
-              undoRedoMenu: false,
-            },
-          });
-          sketch.on('create', (event) => {
-            if (event.state === 'start') {
-              detectionParameters.geometry = null;
-              detectionLayer.removeAll();
-            }
-            if (event.state === 'complete') {
-              detectionParameters.geometry = event.graphic.geometry;
-            }
-          });
+          objectDetectionPanel.setupTextSketch();
         } else {
-          objectDetectionPanel.hide();
-          view.ui.remove(sketch);
-          detectionLayer.removeAll();
-          detectionParameters.geometry = null;
+          objectDetectionPanel.hide();          
         }
       });
 
