@@ -266,10 +266,107 @@
           this.pointsOpacity = 0.9;
           this.pointsDisplayMode = 'segments';
           this.currentMode = null;
-          this.deleteMode = false;
           view.map.add(this.pointsLayer);
           this.createPanel();
           this.setupEventListeners();
+          this.textSketch = null;
+          this.pointsSketch = null;
+          this.deleteMode = false;
+          
+        }
+
+        setupPointsSketch() {
+          if (this.pointsSketch) {
+            this.pointsSketch.destroy();
+          }
+
+          this.pointsSketch = new Sketch({
+            layer: this.pointsLayer,
+            view: this.view,
+            availableCreateTools: ["point"],
+            visibleElements: {
+              createTools: { point: true },
+              selectionTools: {
+                "lasso-selection": false,
+                "rectangle-selection": false,
+              },
+              settingsMenu: false,
+              undoRedoMenu: false,
+            }
+          });
+
+          this.pointsSketch.on("create", (event) => {
+            if (event.state === "complete") {
+              const point = event.graphic.geometry;
+              const coords = [point.longitude, point.latitude];
+              
+              if (this.currentMode === "include") {
+                this.includePoints.push(coords);
+              } else if (this.currentMode === "exclude") {
+                this.excludePoints.push(coords);
+              }
+              
+              this.updatePointsGraphics();
+            }
+          });
+
+          this.pointsSketch.on("delete", (event) => {
+            if (event.graphics.length > 0) {
+              event.graphics.forEach(graphic => {
+                const point = [graphic.geometry.longitude, graphic.geometry.latitude];
+                this.includePoints = this.includePoints.filter(p => 
+                  Math.abs(p[0] - point[0]) > 0.0000001 || Math.abs(p[1] - point[1]) > 0.0000001
+                );
+                this.excludePoints = this.excludePoints.filter(p => 
+                  Math.abs(p[0] - point[0]) > 0.0000001 || Math.abs(p[1] - point[1]) > 0.0000001
+                );
+              });
+              this.updatePointsGraphics();
+            }
+          });
+        }
+
+        setupTextSketch() {
+          if (this.textSketch) {
+            this.textSketch.destroy();
+          }
+
+          this.textSketch = new Sketch({
+            layer: this.detectionParameters.layer,
+            view: this.view,
+            container: "sketch_container",
+            availableCreateTools: ["rectangle"],
+            visibleElements: {
+              selectionTools: {
+                "lasso-selection": false,
+                "rectangle-selection": false,
+              },
+              settingsMenu: false,
+              undoRedoMenu: false,
+            },
+          });
+
+          this.textSketch.on('create', (event) => {
+            if (event.state === 'start') {
+              this.detectionParameters.geometry = null;
+              this.detectionParameters.layer.removeAll();
+            }
+            if (event.state === 'complete') {
+              this.detectionParameters.geometry = event.graphic.geometry;
+            }
+          });
+        }
+
+        // Update show method to initialize correct sketch
+        show() {
+          this.panel.style.display = 'block';
+          this.panelVisible = true;
+          
+          // Initialize sketch based on active tab
+          const activeTab = this.panel.querySelector('.tab-btn.active').dataset.tab;
+          if (activeTab === 'text') {
+            this.setupTextSketch();
+          }
         }
 
         createPanel() {
@@ -377,7 +474,6 @@
                       <div class="button-group">
                         <button id="includeMode" class="mode-button">Add Include Points</button>
                         <button id="excludeMode" class="mode-button">Add Exclude Points</button>
-                        <button id="deleteMode" class="mode-button">Delete Points</button>
                       </div>
                     </div>
 
@@ -745,6 +841,31 @@
               button.classList.add('active');
               const tabId = button.dataset.tab;
               this.panel.querySelector(`#${tabId}-tab`).classList.add('active');
+
+              // Handle sketch tools based on active tab
+              //clear
+                if (this.pointsSketch) {
+                  this.pointsSketch.cancel();
+                }
+              if (this.textSketch) {
+                  this.textSketch.cancel();
+              }
+              this.pointsLayer.removeAll();
+              this.includePoints = [];
+              this.excludePoints = [];
+
+              if (tabId === 'text') {
+                if (!this.textSketch) {
+                  this.setupTextSketch();
+                }
+              } else if (tabId === 'points') {
+                if (!this.pointsSketch) {
+                  this.setupPointsSketch();
+                }              
+                // Reset point mode buttons
+                this.currentMode = null;
+                this.updateButtonStates();
+              }
             });
           });
 
@@ -752,11 +873,9 @@
           const updateButtonStates = () => {
             const includeButton = this.panel.querySelector('#includeMode');
             const excludeButton = this.panel.querySelector('#excludeMode');
-            const deleteButton = this.panel.querySelector('#deleteMode');
 
             includeButton.className = `mode-button ${this.currentMode === 'include' ? 'active' : ''}`;
             excludeButton.className = `mode-button ${this.currentMode === 'exclude' ? 'active' : ''}`;
-            deleteButton.className = `mode-button ${this.deleteMode ? 'delete-mode' : ''}`;
           };
 
           // Points opacity slider
@@ -782,52 +901,6 @@
               this.pointsDisplayMode = e.target.value;
               this.updatePointsDisplay();
             });
-          });
-
-          // Add click handler for points
-          this.view.on("click", (event) => {
-            // Only handle clicks when points tab is active
-            if (!this.panelVisible || !this.panel.querySelector('#points-tab').classList.contains('active')) {
-              return;
-            }
-
-            event.stopPropagation();
-
-            if (this.deleteMode) {
-              // Delete point logic
-              const screenPoint = {
-                x: event.x,
-                y: event.y
-              };
-
-              this.view.hitTest(screenPoint).then((response) => {
-                const graphics = response.results?.filter(result => 
-                  result.graphic.layer === this.pointsLayer
-                );
-
-                if (graphics && graphics.length > 0) {
-                  const point = [graphics[0].graphic.geometry.longitude, graphics[0].graphic.geometry.latitude];
-                  this.includePoints = this.includePoints.filter(p => 
-                    Math.abs(p[0] - point[0]) > 0.0000001 || Math.abs(p[1] - point[1]) > 0.0000001
-                  );
-                  this.excludePoints = this.excludePoints.filter(p => 
-                    Math.abs(p[0] - point[0]) > 0.0000001 || Math.abs(p[1] - point[1]) > 0.0000001
-                  );
-                  this.updatePointsGraphics();
-                }
-              });
-            } else if (this.currentMode) {
-              // Add point logic
-              const mapPoint = this.view.toMap({x: event.x, y: event.y});
-              const point = [mapPoint.longitude, mapPoint.latitude];
-              
-              if (this.currentMode === 'include') {
-                this.includePoints.push(point);
-              } else {
-                this.excludePoints.push(point);
-              }
-              this.updatePointsGraphics();
-            }
           });
 
           // Points detect button
@@ -879,33 +952,34 @@
           });
 
           // Point mode buttons
-          this.panel.querySelector('#includeMode').addEventListener('click', () => {
-            if (this.deleteMode) {
-              this.deleteMode = false;
-            }
-            this.currentMode = this.currentMode === 'include' ? null : 'include';
-            updateButtonStates();
-            this.view.cursor = this.currentMode ? "crosshair" : "default";
-          });
+            this.panel.querySelector('#includeMode').addEventListener('click', () => {
+              if (this.deleteMode) {
+                this.deleteMode = false;
+                this.pointsSketch.delete.cancel();
+              }
+              this.currentMode = this.currentMode === 'include' ? null : 'include';
+              if (this.currentMode) {
+                this.setupPointsSketch();
+                this.pointsSketch.create("point");
+              } else {
+                this.pointsSketch.cancel();
+              }
+              updateButtonStates();
+            });
 
-          this.panel.querySelector('#excludeMode').addEventListener('click', () => {
-            if (this.deleteMode) {
-              this.deleteMode = false;
-            }
-            this.currentMode = this.currentMode === 'exclude' ? null : 'exclude';
-            updateButtonStates();
-            this.view.cursor = this.currentMode ? "crosshair" : "default";
-          });
-
-          this.panel.querySelector('#deleteMode').addEventListener('click', () => {
-            this.deleteMode = !this.deleteMode;
-            if (this.deleteMode) {
-              this.currentMode = null;
-              this.view.cursor = "not-allowed";
-            } else {
-              this.view.cursor = "default";
-            }
-            updateButtonStates();
+            this.panel.querySelector('#excludeMode').addEventListener('click', () => {
+              if (this.deleteMode) {
+                this.deleteMode = false;
+                this.pointsSketch.delete.cancel();
+              }
+              this.currentMode = this.currentMode === 'exclude' ? null : 'exclude';
+              if (this.currentMode) {
+                this.setupPointsSketch();
+                this.pointsSketch.create("point");
+              } else {
+                this.pointsSketch.cancel();
+              }
+              updateButtonStates();
           });
         }
 
