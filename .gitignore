@@ -128,3 +128,5 @@ packages/car_evaluation_model/car_evaluation_model/data/raw/*.data
 *.shp
 *.shx
 *.tif
+node_modules
+.DS_Store
