@@ -19,8 +19,12 @@ class Settings(BaseSettings):
     logging: LoggingSettings = LoggingSettings()
 
     # Model Settings
-    DEFAULT_MODEL_TYPE: str = "sam2-hiera-large"
-    MAX_TILES_LIMIT: int = 1000  # Maximum number of tiles allowed for processing
+    DEFAULT_TEXT_MODEL_TYPE: str = "sam2-hiera-large"
+    DEFAULT_POINT_MODEL_TYPE: str = "vit_b"  # Model type for point prediction. It can be one of vit_h, vit_l, vit_b
+    MAX_TILES_LIMIT: int = 2000  # Maximum number of tiles allowed for processing
+    MIN_ZOOM_LEVEL: int = 19  # Minimum zoom level allowed
+    MAX_ZOOM_LEVEL: int = 22  # Maximum zoom level allowed
+    BUFFER_DEGREES_FOR_POINT_PREDICTION: float = 0.001  # Buffer size in degrees
 
     # BACKEND_CORS_ORIGINS is a comma-separated list of origins
     # e.g: http://localhost,http://localhost:4200,http://localhost:3000

@@ -49,8 +49,40 @@ class PredictionRequest(BaseModel):
             "example": {
                 "bounding_box": [-96.81040, 32.97140, -96.81000, 32.97180],
                 "text_prompt": "trees",
-                "zoom_level": 19,
+                "zoom_level": 20,
                 "box_threshold": 0.24,
                 "text_threshold": 0.24
+            }
+        }
+
+
+class PointPredictionRequest(BaseModel):
+    points_include: List[List[float]] = Field(
+        description="List of points to include [lon, lat]"
+    )
+    points_exclude: Optional[List[List[float]]] = Field(
+        default=None,
+        description="List of points to exclude [lon, lat]"
+    )
+    zoom_level: int = Field(
+        default=19,
+        description="Zoom level for satellite imagery",
+        ge=1,
+        le=22
+    )
+    box_threshold: float = Field(
+        default=0.3,
+        description="Confidence threshold for object detection boxes",
+        ge=0,
+        le=1
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "points_include": [[-96.81020, 32.97160], [-96.81030, 32.97170]],
+                "points_exclude": [[-96.81010, 32.97150], [-96.81040, 32.97180]],
+                "zoom_level": 20,
+                "box_threshold": 0.3
             }
         }

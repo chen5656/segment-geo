@@ -1,2 +1,2 @@
 from .health import Health
-from .predict import PredictionRequest, PredictionResults, ErrorResponse
+from .predict import PredictionRequest, PredictionResults, ErrorResponse, PointPredictionRequest

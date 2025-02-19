@@ -849,7 +849,7 @@
                 points_exclude: this.excludePoints
               };
 
-              const response = await fetch('http://localhost:8001/api/v1/segment/input_points_prompt', {
+              const response = await fetch('http://localhost:8001/api/v1/predict/points', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -1656,7 +1656,7 @@
           redirect: "follow"
         };
 
-        const response = await fetch("http://localhost:8001/api/v1/segment/text_prompt", requestOptions);
+        const response = await fetch("http://localhost:8001/api/v1/predict/text", requestOptions);
         if (!response.ok) {
           throw new Error("Network response was not ok while sending object detection request.");
         }
