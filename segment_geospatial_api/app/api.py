@@ -2,7 +2,7 @@ from typing import Union
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
-from segment_geospatial_api.app.segment_geospatial.predict import textPredictor
+from app.segment_geospatial.predict import textPredictor
 from app.segment_geospatial.point_predict import pointPredictor
 from loguru import logger
 
