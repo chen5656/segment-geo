@@ -8,7 +8,7 @@ import os
 from pyproj import Transformer
 from app.config import settings
 import numpy as np
-from app.segment_geospatial.utils import transform_coordinates, download_satellite_image, calculate_bounding_box
+from app.segment_geospatial.utils import transform_coordinates, download_satellite_image, calculate_bounding_box, count_tiles
 # Configure loguru logger
 logger.remove()  # Remove default handler
 logger.add(
@@ -92,11 +92,17 @@ class PointPredictor:
         zoom_level: int = 20
     ) -> Dict[str, Any]:
         """Make a prediction using points."""
-        logger.info("\n[Point Predict] Parameters:")
-        logger.info(f"- points_include: {points_include}")
-        logger.info(f"- points_exclude: {points_exclude}")
-        logger.info(f"- box_threshold: {box_threshold}")
-        logger.info(f"- zoom_level: {zoom_level}")
+        logger.info(
+            f"Starting prediction for points_include: {len(points_include)} points, "
+            f"points_exclude: {len(points_exclude)} points, "
+            f"box_threshold: {box_threshold}, zoom_level: {zoom_level}"
+        )
+
+
+        # Validate thresholds
+        if not (0 < box_threshold <= 1) :
+            logger.error(f"[Error] Invalid threshold values: box={box_threshold}")
+            return {"error": "Threshold values must be between 0 and 1"}
 
         # Generate unique filenames
         request_id = str(uuid.uuid4())
@@ -109,6 +115,15 @@ class PointPredictor:
         all_points = points_include + (points_exclude or [])
         
         bounding_box = calculate_bounding_box(all_points, self.DEFAULT_BUFFER_SIZE)
+
+                
+        # Check number of tiles
+        total_tiles = count_tiles(bounding_box, zoom_level)
+        if total_tiles > settings.MAX_TILES_LIMIT:  
+            logger.error(f"[Error] Too many tiles requested: {total_tiles}, maximum allowed tiles: {settings.MAX_TILES_LIMIT}")
+            return {"error": f"Selected area is too large for zoom level {zoom_level}, maximum allowed tiles: {settings.MAX_TILES_LIMIT}, requested tiles: {total_tiles}"}
+        else:
+            logger.info(f"[Info] Number of tiles to download: {total_tiles}")
                 
         try:
             # Download satellite imagery

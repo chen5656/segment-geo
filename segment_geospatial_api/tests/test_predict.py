@@ -4,13 +4,12 @@ import asyncio
 import glob
 import json
 from datetime import datetime
-import pytest, unittest
 
 # Add the project root directory to Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(project_root)
 
-from segment_geospatial_api.app.segment_geospatial.predict import predictor
+from app.segment_geospatial.predict import predictor
 from app.schemas.predict import PredictionRequest
 
 def save_geojson(data, prefix="test_result"):
@@ -32,6 +31,9 @@ def save_geojson(data, prefix="test_result"):
 
 async def call_predict(request: PredictionRequest):
     try:        
+        if not predictor._initialized:
+            predictor.setup()
+            
         _result = await predictor.make_prediction(
             bounding_box=request.bounding_box,
             text_prompt=request.text_prompt,
@@ -46,17 +48,12 @@ async def call_predict(request: PredictionRequest):
         raise
 
 if __name__ == "__main__":
-    # [min_longitude, min_latitude, max_longitude, max_latitude]
-    # [left, bottom, right, top]
+
+    bounding_box = [-76.14878853603665,43.04631460392694,-76.14757617756175,43.04701633868996]
     request_data = {
-        "bounding_box": [
-            -96.78806887088176,
-            32.76760907972303,
-            -96.78423468921088,
-            32.769729127062774
-        ],
+        "bounding_box": bounding_box,
         "text_prompt": "buildings",
-        "zoom_level": 18,
+        "zoom_level": 20,
         "box_threshold": 0.4,
         "text_threshold": 0.24,
     }

@@ -6,8 +6,9 @@ from typing import Dict, Any
 from loguru import logger
 import sys
 import os
-from app.config import settings 
+from app.config import settings
 from app.segment_geospatial.utils import transform_coordinates, download_satellite_image, count_tiles
+
 # Configure loguru logger
 logger.remove()  # Remove default handler
 logger.add(
@@ -57,9 +58,8 @@ class TextPredictor:
         logger.info("Initializing LangSAM model...")
         
         try:
-            logger.info(f"\n[Loading Model] model_type: {model_type}")
             self._sam = LangSAM(model_type=model_type)
-            
+
             self._initialized = True
             logger.success("LangSAM model initialized successfully")
         except Exception as e:
@@ -131,52 +131,60 @@ class TextPredictor:
             logger.error(f"[Error] Invalid bounding box length: {len(bounding_box)}")
             return {"error": "Bounding box must contain exactly 4 coordinates [west, south, east, north]"}
         
-
         # Check number of tiles
         total_tiles = count_tiles(bounding_box, zoom_level)
-        if total_tiles > settings.MAX_TILES_LIMIT:
-            logger.error(f"[Error] Number of tiles exceeds the maximum limit: {total_tiles}")
-            return {"error": f"Number of tiles exceeds the maximum limit: {total_tiles}"}        
+        if total_tiles > settings.MAX_TILES_LIMIT:  
+            logger.error(f"[Error] Too many tiles requested: {total_tiles}, maximum allowed tiles: {settings.MAX_TILES_LIMIT}")
+            return {"error": f"Selected area is too large for zoom level {zoom_level}, maximum allowed tiles: {settings.MAX_TILES_LIMIT}, requested tiles: {total_tiles}"}
         else:
             logger.info(f"[Info] Number of tiles to download: {total_tiles}")
-        # Generate unique filenames
+        
+        if not text_prompt.strip():
+            logger.error("Empty text prompt provided")
+            return {"error": "Text prompt cannot be empty"}
+            
+        if not (1 <= zoom_level <= 22):
+            logger.error(f"Invalid zoom level: {zoom_level}")
+            return {"error": "Zoom level must be between 1 and 22"}
+
+        # Generate unique filenames for this request
         request_id = str(uuid.uuid4())
         logger.info(f"[Info] Generated request ID: {request_id}")
         input_image = f"satellite_{request_id}.tif"
         output_image = f"segment_{request_id}.tif"
         output_geojson = f"segment_{request_id}.geojson"
-                
+        
         try:
             # Download satellite imagery
-            logger.info("\n[Download] Downloading satellite imagery...")
+            logger.info("[Info] Downloading satellite imagery...")
             try:
                 download_satellite_image(
                     input_image,
                     bounding_box,
                     zoom_level
                 )
-                logger.success("[Download] Satellite imagery downloaded successfully")
+                logger.success("[Info] Satellite imagery downloaded successfully")
             except Exception as e:
-                logger.error(f"[Error] Failed to download satellite imagery: {str(e)}")
-                raise Exception("Failed to download satellite imagery: `{str(e)}`")
+                logger.error(f"[Error] Failed to download satellite imagery: {str(e)}", exc_info=True)
+                return {"error": f"Failed to download satellite imagery: {str(e)}"}
 
             # Run prediction
-            logger.info("\n[Predict] Running SAM prediction...")
-            try:                
+            logger.info("[Info] Running SAM prediction...")
+            try:
                 self.sam.predict(
                     input_image, 
                     text_prompt, 
                     box_threshold,
                     text_threshold
                 )
-                logger.success("[Predict] SAM prediction completed successfully")
-            except Exception:
-                logger.error("[Error] Failed to run SAM prediction")
-                raise Exception("Failed to run SAM prediction: `{str(e)}`")
+                logger.success("[Info] SAM prediction completed successfully")
+            except Exception as e:
+                logger.error(f"[Error] Failed to run prediction: {str(e)}", exc_info=True)
+                return {"error": f"Failed to run prediction: {str(e)}"}
             
             # Generate visualization
-            logger.info("\n[Info] Generating visualization...")
-            try:                
+            logger.info("[Info] Generating visualization...")
+            try:
                 self.sam.show_anns(
                     cmap="Greys_r",
                     add_boxes=False,
@@ -186,55 +194,50 @@ class TextPredictor:
                     output=output_image,
                 )
                 logger.success("[Info] Visualization generated successfully")
-            except Exception:
-                logger.error("[Error] Failed to generate visualization")
-                raise
-
+            except Exception as e:
+                logger.error(f"[Error] Failed to generate visualization: {str(e)}", exc_info=True)
+                return {"error": f"Failed to generate visualization: {str(e)}"}
+            
             # Convert to GeoJSON
+            logger.info("[Info] Converting to GeoJSON...")
             try:
                 raster_to_vector(output_image, output_geojson, None)
-                logger.success("[Convert] GeoJSON converted successfully")
+                logger.success("[Info] Converted to GeoJSON successfully")
             except Exception as e:
-                logger.error(f"[Error] Failed to convert to GeoJSON: No vector data found in the image")
-                raise Exception("No vector data found in the image")
+                logger.error(f"[Error] Failed to convert to GeoJSON: {str(e)}. There may be no {text_prompt} in the specified area", exc_info=True)
+                return {"error": f"Failed to convert to GeoJSON: {str(e)}. There may be no {text_prompt} in the specified area"}
             
-            # Read and process GeoJSON
-            try:
-                with open(output_geojson, 'r') as f:
-                    geojson_content = json.load(f)
-                logger.info(f"[Process] Loaded GeoJSON with {len(geojson_content.get('features', []))} features")
+            # Read GeoJSON content
+            logger.info("[Info] Reading GeoJSON content...")
+            with open(output_geojson, 'r') as f:
+                geojson_content = json.load(f)
                 
-                transformed_geojson = transform_coordinates(geojson_content)
-                geojson_count = len(transformed_geojson.get('features', []))
-                logger.info(f"[Process] Transformed {geojson_count} features to WGS84")
-                
-                return {
-                    "errors": None,
-                    "version": "1.0",
-                    "predictions": f"Successfully found {geojson_count} features",
-                    "geojson": transformed_geojson
-                }
-                
-            except Exception as e:
-                logger.error(f"[Error] Failed to process GeoJSON: {str(e)}")
-                raise
+   
+            # Transform coordinates to lat/long
+            logger.info("[Info] Transforming coordinates to WGS84...")
+            transformed_geojson = transform_coordinates(geojson_content)
+            geojson_count = len(transformed_geojson.get('features', []))
             
-        except Exception as e:
-            logger.error(f"\n[Error] Exception occurred: {str(e)}")
-            return {"error": str(e)}
-            
+            logger.success(f"Successfully found {geojson_count} features")
+            return {
+                "errors": None,
+                "version": "1.0",
+                "predictions": f"Successfully found {geojson_count} features",
+                "geojson": transformed_geojson
+            }
+                   
         finally:
             # Clean up temporary files
-            logger.info("\n[Cleanup] Removing temporary files...")
+            logger.info("[Info] Cleaning up temporary files...")
             for file in [input_image, output_image, output_geojson]:
                 if os.path.exists(file):
                     try:
                         os.remove(file)
-                        logger.info(f"[Cleanup] Removed: {file}")
+                        logger.debug(f"[Info] Removed temporary file: {file}")
                     except Exception as e:
-                        logger.error(f"[Cleanup] Failed to remove {file}: {str(e)}")
+                        logger.warning(f"[Warning] Failed to remove temporary file {file}: {str(e)}")
 
 
 # Create singleton instance
-textPredictor = TextPredictor()
-textPredictor.setup()
+predictor = TextPredictor()
+predictor.setup()
