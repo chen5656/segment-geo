@@ -207,7 +207,7 @@
 
         // Function to standardize and validate the address
         async function standardizeAndValidateAddress(address) {
-            return {
+            const nnn = {
         "standardizedAddress": "418 BEAR ST, SYRACUSE, NY 13208",
         "lat": 43.0707,
         "lon": -76.1602,
@@ -2915,7 +2915,7 @@
 
             }
         }
-            const response = await fetch('/api/standardize_and_validate', {
+            const response = await fetch('http://127.0.0.1:5000/api/standardize_and_validate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

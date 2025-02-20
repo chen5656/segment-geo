@@ -5,7 +5,8 @@ from shapely.geometry import Point
 import requests
 import urllib3
 import logging
-
+import os
+import json
 # Suppress only the single InsecureRequestWarning from urllib3 needed for this script
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -16,8 +17,18 @@ model_name = "Hnabil/t5-address-standardizer"
 model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-# Load parcel data from GeoJSON
-parcels = gpd.read_file(r'C:\Users\527336\AppData\Roaming\JetBrains\PyCharmCE2024.2\light-edit\Parcel_Map_-_October_2019.geojson')
+# Get the current directory where app.py is located
+current_dir = os.path.dirname(os.path.abspath(__file__))
+data_path = os.path.join(current_dir, 'data', 'Parcel_Map_-_October_2019.geojson')
+
+try:
+    # Load parcel data from GeoJSON
+    parcels = gpd.read_file(data_path)
+except Exception as e:
+    print(f"Error loading GeoJSON file: {e}")
+    print(f"Attempted to load from path: {data_path}")
+    # You might want to raise the error or handle it appropriately
+    raise
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -159,12 +170,16 @@ def standardize_and_validate():
     # If no intersecting parcel polygon is found, show the geocoded point
     parcel_centroid = None
     parcel_details = None
+    parcel_geojson = None
     if parcel_match.empty:
         summary.append("No intersecting parcel polygon was found. The result doesn't have validation.")
         parcel_centroid = {
             'lat': lat_google,
             'lon': lon_google
         }
+    else:
+        # Get first match as GeoJSON
+        parcel_geojson = json.loads(parcel_match.iloc[0:1].to_json())
 
     return jsonify({
         'standardizedAddress': standardized_address,
@@ -173,7 +188,8 @@ def standardize_and_validate():
         'confidenceScore': confidence_score,
         'summary': summary,
         'parcelCentroid': parcel_centroid,
-        'parcelDetails': parcel_details
+        'parcelDetails': parcel_details,
+        'parcel_match': parcel_geojson
     })
 
 if __name__ == '__main__':
