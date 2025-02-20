@@ -2,7 +2,7 @@ from typing import Union
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
-from segment_geospatial_api.app.segment_geospatial.predict import textPredictor
+from app.segment_geospatial.predict import predictor
 from app.segment_geospatial.point_predict import pointPredictor
 from loguru import logger
 
@@ -30,7 +30,7 @@ def health() -> dict:
                 status_code=200)
 async def predict_text(request: schemas.PredictionRequest):
     try:
-        result = await textPredictor.make_prediction(
+        result = await predictor.make_prediction(
             bounding_box=request.bounding_box,
             text_prompt=request.text_prompt,
             zoom_level=request.zoom_level,

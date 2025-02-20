@@ -61,6 +61,7 @@ def transform_coordinates(geojson_data):
     return geojson_data
 
 def download_satellite_image(image_name, bounding_box, zoom_level):
+    # Download tiles from Tile Map Server (online maps) and make a large image.
     tms_to_geotiff(
         image_name,
         bounding_box,

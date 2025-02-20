@@ -779,8 +779,8 @@
           });
 
           // Box threshold slider
-          const boxThresholdInput = this.panel.querySelector('#box-threshold');
-          const boxThresholdValue = this.panel.querySelector('#box-threshold-value');
+          const boxThresholdInput = this.panel.querySelector('#points-box-threshold');
+          const boxThresholdValue = this.panel.querySelector('#points-box-threshold-value');
           boxThresholdInput.addEventListener('input', (e) => {
             this.boxThreshold = parseFloat(e.target.value);
             boxThresholdValue.textContent = this.boxThreshold.toFixed(2);
