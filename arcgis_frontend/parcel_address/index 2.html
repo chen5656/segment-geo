@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Address Standardization and Validation</title>
+    <link rel="stylesheet" href="https://openlayers.org/en/v6.5.0/css/ol.css" type="text/css">
+    <style>
+        #map {
+            width: 100%;
+            height: 400px;
+        }
+        #info {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Address Standardization and Validation</h1>
+    <form id="addressForm">
+        <label for="address">Enter Address:</label>
+        <input type="text" id="address" name="address">
+        <button type="submit">Submit</button>
+    </form>
+    <div id="info">
+        <p>Before Standardization: <span id="beforeAddress"></span></p>
+        <p>After Standardization: <span id="afterAddress"></span></p>
+        <p>Confidence Score: <span id="confidenceScore"></span></p>
+        <p>Summary: <span id="summary"></span></p>
+        <p>Parcel Details: <span id="parcelDetails"></span></p>
+    </div>
+    <div id="map" class="map"></div>
+    <script src="https://openlayers.org/en/v6.5.0/build/ol.js"></script>
+    <script>
+        // Initialize the map
+        const map = new ol.Map({
+            target: 'map',
+            layers: [
+                new ol.layer.Tile({
+                    source: new ol.source.OSM()
+                })
+            ],
+            view: new ol.View({
+                center: [0, 0],
+                zoom: 2
+            })
+        });
+
+        const parcelSource = new ol.source.Vector({
+            loader: function(extent, resolution, projection) {
+                const url = 'https://services9.arcgis.com/EZrEnhBIXzBZ042I/arcgis/rest/services/ParcleMap/FeatureServer/0/query?f=json&where=1=1&outFields=*&spatialRel=esriSpatialRelIntersects&geometry=' +
+                    encodeURIComponent('{"xmin":' + extent[0] + ',"ymin":' + extent[1] + ',"xmax":' + extent[2] + ',"ymax":' + extent[3] + ',"spatialReference":{"wkid":102100}}') +
+                    '&geometryType=esriGeometryEnvelope&inSR=102100&outSR=102100';
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        const features = new ol.format.EsriJSON().readFeatures(data);
+                        parcelSource.addFeatures(features);
+                    });
+            },
+            strategy: ol.loadingstrategy.bbox
+            });
+        const parcelLayer = new ol.layer.Vector({
+            source: parcelSource
+        });
+        map.addLayer(parcelLayer);
+
+        // Handle form submission
+        document.getElementById('addressForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const address = document.getElementById('address').value;
+
+            // Standardize and validate the address
+            const result = await standardizeAndValidateAddress(address);
+
+            // Update the info section
+            document.getElementById('beforeAddress').textContent = address;
+            document.getElementById('afterAddress').textContent = result.standardizedAddress;
+            document.getElementById('confidenceScore').textContent = result.confidenceScore;
+            document.getElementById('summary').textContent = result.summary.join(', ');
+
+            // Display parcel details if available
+            if (result.parcelDetails) {
+                document.getElementById('parcelDetails').textContent = JSON.stringify(result.parcelDetails, null, 2);
+            } else {
+                document.getElementById('parcelDetails').textContent = 'No parcel details available.';
+            }
+
+            // Clear existing layers
+            map.getLayers().forEach(layer => {
+                if (layer instanceof ol.layer.Vector && layer !== parcelLayer) {
+                    map.removeLayer(layer);
+                }
+            });
+
+            // Add the address point to the map
+        let addressPoint;
+        if (result.lat && result.lon) {
+            addressPoint = new ol.Feature({
+                geometry: new ol.geom.Point(ol.proj.fromLonLat([result.lon, result.lat]))
+            });
+        } else if (result.parcelCentroid) {
+            addressPoint = new ol.Feature({
+                geometry: new ol.geom.Point(ol.proj.fromLonLat([result.parcelCentroid.lon, result.parcelCentroid.lat]))
+            });
+        }
+
+        if (addressPoint) {
+            addressPoint.setStyle(new ol.style.Style({
+                image: new ol.style.Icon({
+                    src: 'https://openlayers.org/en/v6.5.0/examples/data/icon.png'
+                })
+            }));
+            const vectorSource = new ol.source.Vector({
+                features: [addressPoint]
+            });
+            const vectorLayer = new ol.layer.Vector({
+                source: vectorSource
+            });
+            map.addLayer(vectorLayer);
+            map.getView().setCenter(ol.proj.fromLonLat([result.lon || result.parcelCentroid.lon, result.lat || result.parcelCentroid.lat]));
+            map.getView().setZoom(15);
+        }
+    });
+
+    // Function to standardize and validate the address
+    async function standardizeAndValidateAddress(address) {
+        const response = await fetch('/api/standardize_and_validate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ address })
+        });
+        const data = await response.json();
+        return data;
+    }
+</script>
+</body>
+</html>
