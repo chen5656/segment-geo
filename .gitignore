@@ -131,4 +131,4 @@ packages/car_evaluation_model/car_evaluation_model/data/raw/*.data
 node_modules/
 .DS_Store
 
-!arcgis_frontend/toyota/data/Parcel_Map_-_October_2019.geojson
+!open_layers/data/Parcel_Map_-_October_2019.geojson
