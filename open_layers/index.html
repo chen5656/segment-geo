@@ -158,7 +158,7 @@
                     const allExtent = ol.extent.boundingExtent(extents);
                     console.log('allExtent', allExtent);
                     map.getView().fit(allExtent, {
-                        padding: [50, 50, 50, 50], // Add some padding around the features
+                        padding: [180, 180, 180, 180], // Add some padding around the features
                         duration: 500
                     });
                 } finally {
@@ -171,13 +171,17 @@
 
         function addPolygonLayer(map, color, source) {
             const vectorLayer = new ol.layer.Vector({
-                source: source
+                source: source,
+                style: new ol.style.Style({
+                    fill: new ol.style.Fill({
+                        color: color
+                    }),
+                    stroke: new ol.style.Stroke({
+                        color: 'black',
+                            width: 4
+                    })
+                })
             });
-            vectorLayer.setStyle(new ol.style.Style({
-                "fill-color": color,
-                "stroke-color": "black",
-                "stroke-width": 4
-            }));
             map.addLayer(vectorLayer);
             return vectorLayer;
         }       
