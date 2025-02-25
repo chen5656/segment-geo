@@ -1,7 +1,7 @@
-.hide {
+
+.hide{
   display: none;
 }
-
 .object-detection-panel {
   position: absolute;
   top: 10px;
@@ -41,6 +41,22 @@
 
 .input-group {
   margin-bottom: 15px;
+}
+        
+.radio-group {
+  display: flex;
+  gap: 15px;
+  margin-top: 5px;
+  width: 50px;
+}
+
+.radio-group input[type="radio"] {
+  width: 12px;
+}
+
+.radio-group label {
+  display: inline;
+  margin-bottom: 0;
 }
 
 .input-group label {
@@ -122,4 +138,88 @@
   white-space: pre-wrap;
   max-height: 200px;
   overflow: auto;
+}
+
+.reset-button {
+  width: 100%;
+  padding: 10px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+input[type="range"] {
+  width: 80%;
+  margin: 10px 0;
+}
+
+input[type="color"] {
+  width: 50px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.tab-container {
+  width: 100%;
+}
+
+.tab-buttons {
+  display: flex;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 15px;
+}
+
+.tab-btn {
+  padding: 10px 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  color: #666;
+}
+
+.tab-btn.active {
+  color: #1976d2;
+  border-bottom: 2px solid #1976d2;
+}
+
+.tab-content {
+  padding: 10px;
+}
+
+.tab-pane {
+  display: none;
+}
+
+.tab-pane.active {
+  display: block;
+}
+
+.mode-button {
+  padding: 8px 15px;
+  margin: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  cursor: pointer;
+}
+
+.mode-button.active {
+  background-color: #1976d2;
+  color: white;
+  border-color: #1976d2;
+}
+
+.mode-button.delete-mode {
+  background-color: #ff4444;
+  color: white;
+  border-color: #ff4444;
 }

@@ -7,7 +7,6 @@
   <title>Geocode Addresses by Map Extent</title>
   <link rel="stylesheet" href="https://js.arcgis.com/4.31/esri/themes/light/main.css">
   <script src="https://js.arcgis.com/4.31/"></script>
-  <script type="module" src="./components/ObjectDetectionPanel.js"></script>
   <style>
     html,
     body,
@@ -144,7 +143,7 @@
     }
   </style>
   <link rel="stylesheet" href="https://app.vexcelgroup.com/map/latest/public/css/styles.css" type="text/css" />
-  <link rel="stylesheet" href="styles/ObjectDetectionPanel.css" type="text/css" />
+  <!-- <link rel="stylesheet" href="styles/ObjectDetectionPanel.css" type="text/css" /> -->
   <script type="text/javascript" src="https://app.vexcelgroup.com/map/latest/public/Vexcel.js"></script>
 </head>
 
@@ -180,7 +179,9 @@
       </div>
     </div>
   </div>
-  <div id="rightPanel"></div>
+  <div id="rightPanel"></div>  
+  <script src="./components/utils.js"></script>
+  <script type="module" src="./components/ObjectDetectionPanel.js"></script>
   <script>
     require([
       "esri/config",
@@ -247,17 +248,42 @@
 
       // Object Detection Panel
       import('./components/ObjectDetectionPanel.js').then(module => {
-        let objectDetectionPanel;
-        let textDetectionLayer = new GraphicsLayer();
-        let pointDetectionLayer = new GraphicsLayer();
-        let detectionParameters = {
+        const textDetectionLayer = getNewGraphicLayer('text detection input layer');
+        const pointDetectionLayer = getNewGraphicLayer('point detection input layer');
+        let geojsonLayer = null;
+        const detectionParameters = {
+          view: view,
           textDetectionLayer: textDetectionLayer,
-          textDetectionLayer2: pointDetectionLayer,
+          pointDetectionLayer: pointDetectionLayer,
         };
-        map.add(textDetectionLayer);
-        map.add(pointDetectionLayer);
 
-        objectDetectionPanel = new module.ObjectDetectionPanel(view, detectionParameters, sendTextPredictRequest);
+        const objectDetectionPanel = new module.ObjectDetectionPanel(detectionParameters, displayGeojsonData, geojsonLayer);        
+
+        function getNewGraphicLayer(title){
+          const lyr = new GraphicsLayer({ title: title });
+          map.add(lyr);
+          return lyr;
+        };
+
+        function displayGeojsonData(geoJson, displayParameters) {
+          detectionParameters.textDetectionLayer.removeAll();
+          detectionParameters.pointDetectionLayer.removeAll();          
+          // Remove old layer if exists
+          if (geojsonLayer) {
+            map.remove(geojsonLayer);            
+          }
+          geojsonLayer = getGeojsonLayer(FeatureLayer, geoJson, displayParameters)        
+          // Add new layer to map
+          map.add(geojsonLayer);        
+          // Update the Editor widget's layers
+          editor.layerInfos = [{
+            layer: geojsonLayer,
+            enabled: true,
+            addEnabled: true,
+            updateEnabled: true,
+            deleteEnabled: true
+          }];
+        }
 
         // Update tool button click handler
         toolButton.addEventListener("click", () => {
@@ -266,30 +292,7 @@
           let sketch;
           if (toolActive) {
             objectDetectionPanel.show();
-            sketch = new Sketch({
-              layer: textDetectionLayer,
-              view: view,
-              container: "sketch_container",
-              availableCreateTools: ["rectangle"],
-              visibleElements: {
-                selectionTools: {
-                  "lasso-selection": false,
-                  "rectangle-selection": false,
-                },
-                settingsMenu: false,
-                undoRedoMenu: false,
-              },
-            });
-            sketch.on('create', (event) => {
-              if (event.state === 'start') {
-                detectionParameters.geometry = null;
-                textDetectionLayer.removeAll();
-              }
-              if (event.state === 'complete') {
-                detectionParameters.geometry = event.graphic.geometry;
-              }
-            });
-
+            sketch = getNewSketch(Sketch, view, textDetectionLayer, detectionParameters);
 
           } else {
             objectDetectionPanel.hide();
@@ -299,7 +302,6 @@
           }
 
         });
-
 
       });
 
@@ -330,75 +332,6 @@
           },
         },
       });
-
-      function displayGeojsonData(geoJson) {
-        const pointSymbol = {
-          type: "simple-marker",  // autocasts as new SimpleMarkerSymbol()
-          style: "square",
-          color: "blue",
-          size: "4px",  // pixels
-          outline: {  // autocasts as new SimpleLineSymbol()
-            color: [255, 255, 0],
-            width: 3  // points
-          }
-        };
-        const polygonSymbol = {
-          type: "simple-fill",  // autocasts as new SimpleFillSymbol()
-          color: [51, 51, 204, 0.9],
-          style: "solid",
-          outline: {  // autocasts as new SimpleLineSymbol()
-            color: "white",
-            width: 1
-          }
-        };
-
-        const graphicsLayer = new GraphicsLayer();
-        map.add(graphicsLayer);
-        // Step 5: Parse the GeoJSON and create graphics
-        geoJson.features.forEach(feature => {
-          const polygon = {
-            type: "polygon", // autocasts as new Polygon()
-            rings: feature.geometry.coordinates[0]
-          };
-
-          const graphic = new Graphic({
-            geometry: polygon,
-            symbol: polygonSymbol,
-            attributes: feature.properties,
-            popupTemplate: {
-              title: "{value}",
-              content: "Polygon Area: {value}"
-            }
-
-          });
-
-          graphicsLayer.add(graphic);
-        });
-
-      }
-
-
-      async function sendTextPredictRequest(requestBody) {
-
-        const myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-
-        const raw = JSON.stringify(requestBody);
-
-        const requestOptions = {
-          method: "POST",
-          headers: myHeaders,
-          body: raw,
-          redirect: "follow"
-        };
-
-        const response = await fetch("http://localhost:8001/api/v1/predict", requestOptions);
-        if (!response.ok) {
-          throw new Error("Network response was not ok while sending object detection request.");
-        }
-        const geojson = await response.json();
-        displayGeojsonData(geojson);
-      }
 
       view.on("click", async (event) => {
         var e = document.getElementById("3dSelect");
@@ -565,7 +498,7 @@
         geocodeExtent(view.extent);
       });
     });
-  </script>
+  </script>  
 </body>
 
 </html>

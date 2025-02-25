@@ -60,28 +60,32 @@ function convertBoundingBoxToGeographic(bbox) {
 }
 
 class ObjectDetectionPanel {
-  constructor(view, detectionParameters, sendTextPredictRequest) {
-    this.view = view;
+  constructor(detectionParameters, displayGeojsonData, geojsonLayer) {
+    this.view = detectionParameters.view;
     this.detectionParameters = detectionParameters;
     this.textPrompt = '';
     this.pointPosition = 'bottom-right';
     this.zoomLevel = 20;
     this.boxThreshold = 0.24;
     this.textThreshold = 0.24;
-    this.opacity = 0.9;
-    this.color = '#3333CC';
     this.geoJsonData = null;
     this.panelVisible = false;
-    this.sendRequest = sendTextPredictRequest;
-    this.displayMode = 'segments';
-    this.editableLayer = null;
+    this.displayGeojsonData = displayGeojsonData;
+    this.displayParameters = {
+      color: '#3333CC',
+      opacity: 0.9,
+      displayMode: 'segments',
+    };
+    this.editableLayer = geojsonLayer;
     this.init();
   }
 
   async init() {
+    this.addStyles();
     await this.createPanel();
     this.setupEventListeners();
   }
+
   async createPanel() {
     this.panel = document.createElement('div');
     this.panel.className = 'object-detection-panel';
@@ -108,6 +112,7 @@ class ObjectDetectionPanel {
       throw error; // Propagate error to init method
     }
   }
+
   setupEventListeners() {
     // Close button
     this.panel.querySelector('.close-btn').addEventListener('click', () => {
@@ -147,19 +152,19 @@ class ObjectDetectionPanel {
     const opacityInput = this.panel.querySelector('#opacity');
     const opacityValue = this.panel.querySelector('#opacity-value');
     opacityInput.addEventListener('input', (e) => {
-      this.opacity = parseFloat(e.target.value);
-      opacityValue.textContent = this.opacity.toFixed(1);
+      this.displayParameters.opacity = parseFloat(e.target.value);
+      opacityValue.textContent = this.displayParameters.opacity.toFixed(1);
       if (this.geoJsonData) {
-        this.updateGeoJsonStyle();
+        this.displayGeojsonData(this.geoJsonData, this.displayParameters);
       }
     });
 
     // Color picker
     const colorPicker = this.panel.querySelector('#color-picker');
     colorPicker.addEventListener('input', (e) => {
-      this.color = e.target.value;
-      if (this.geoJsonData) {
-        this.updateGeoJsonStyle();
+      this.displayParameters.color = e.target.value;
+      if (this.geoJsonData) {        
+        this.displayGeojsonData(this.geoJsonData, this.displayParameters);
       }
     });
 
@@ -167,9 +172,9 @@ class ObjectDetectionPanel {
     const displayModeInputs = this.panel.querySelectorAll('input[name="display-mode"]');
     displayModeInputs.forEach(input => {
       input.addEventListener('change', (e) => {
-        this.displayMode = e.target.value;
+        this.displayParameters.displayMode = e.target.value;
         if (this.geoJsonData) {
-          this.updateDisplay();
+          this.displayGeojsonData(this.geoJsonData, this.displayParameters);
         }
       });
     });
@@ -187,6 +192,17 @@ class ObjectDetectionPanel {
       this.handleDetect();
     });
   }
+
+
+  async addStyles() {
+    const style = document.createElement('style');
+    const moduleURL = new URL('./ObjectDetectionPanel.css', import.meta.url);
+    const response = await fetch(moduleURL);
+    const css = await response.text();
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+
 
   show() {
     this.panel.style.display = 'block';
@@ -231,7 +247,7 @@ class ObjectDetectionPanel {
         "text_threshold": this.textThreshold,
       };  
   
-      await this.sendRequest(requestBody);
+      await this.sendTextPredictRequest(requestBody);
       
     } catch (error) {
       throw error;      
@@ -239,6 +255,28 @@ class ObjectDetectionPanel {
       detectButton.classList.remove('loading');
       detectButton.disabled = false;
     }
+  }
+          
+  async sendTextPredictRequest(requestBody) {
+
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+
+    const raw = JSON.stringify(requestBody);
+
+    const requestOptions = {
+      method: "POST",
+      headers: myHeaders,
+      body: raw,
+      redirect: "follow"
+    };
+
+    const response = await fetch("http://localhost:8001/api/v1/predict", requestOptions);
+    if (!response.ok) {
+      throw new Error("Network response was not ok while sending object detection request.");
+    }
+    this.geoJsonData = await response.json();
+    this.displayGeojsonData(this.geoJsonData, this.displayParameters);
   }
 
   resetSettings() {
@@ -256,184 +294,9 @@ class ObjectDetectionPanel {
     this.panel.querySelector('#opacity-value').textContent = this.opacity.toFixed(1);
     this.panel.querySelector('#color-picker').value = this.color;
 
-    if (this.geoJsonData) {
-      this.updateGeoJsonStyle();
+    if (this.geoJsonData) {      
+      this.displayGeojsonData(geoJson, this.displayParameters);
     }
-  }
-
-  updateGeoJsonStyle() {
-    if (!this.editableLayer) {
-      return;
-    }
-
-    // Update the renderer of the feature layer
-    this.editableLayer.renderer = {
-      type: "simple",
-      symbol: this.displayMode === 'segments' ? {
-        type: "simple-fill",
-        color: [
-          parseInt(this.color.slice(1, 3), 16),
-          parseInt(this.color.slice(3, 5), 16),
-          parseInt(this.color.slice(5, 7), 16),
-          this.opacity
-        ],
-        style: "solid",
-        outline: {
-          color: "white",
-          width: 1
-        }
-      } : {
-        type: "simple-marker",
-        style: "circle",
-        color: [
-          parseInt(this.color.slice(1, 3), 16),
-          parseInt(this.color.slice(3, 5), 16),
-          parseInt(this.color.slice(5, 7), 16),
-          this.opacity
-        ],
-        size: "12px",
-        outline: {
-          color: "white",
-          width: 1
-        }
-      }
-    };
-  }
-
-  updateDisplay() {
-    if (!this.geoJsonData) return;
-    
-    const graphicsLayer = this.detectionParameters.textDetectionLayer;
-    graphicsLayer.removeAll();
-
-    // Create appropriate FeatureLayer based on display mode
-    const featureLayer = new FeatureLayer({
-      source: [], // Start with empty source
-      title: "Detection Result",
-      objectIdField: "objectid",
-      fields: [
-        {
-          name: "objectid",
-          type: "oid"
-        },
-        {
-          name: "value",
-          type: "string"
-        }
-      ],
-      renderer: this.displayMode === 'segments' ? 
-        // Polygon renderer
-        {
-          type: "simple",
-          symbol: {
-            type: "simple-fill",
-            color: [
-              parseInt(this.color.slice(1, 3), 16),
-              parseInt(this.color.slice(3, 5), 16),
-              parseInt(this.color.slice(5, 7), 16),
-              this.opacity
-            ],
-            style: "solid",
-            outline: {
-              color: "white",
-              width: 1
-            }
-          }
-        } :
-        // Point renderer
-        {
-          type: "simple",
-          symbol: {
-            type: "simple-marker",
-            style: "circle",
-            color: [
-              parseInt(this.color.slice(1, 3), 16),
-              parseInt(this.color.slice(3, 5), 16),
-              parseInt(this.color.slice(5, 7), 16),
-              this.opacity
-            ],
-            size: "12px",
-            outline: {
-              color: "white",
-              width: 1
-            }
-          }
-        },
-      geometryType: this.displayMode === 'segments' ? "polygon" : "point",
-      popupTemplate: {
-        title: "{value}",
-        content: this.displayMode === 'segments' ? 
-          "Polygon Area: {value}" : 
-          "Point Location: {value}"
-      }
-    });
-
-    // Add features to the layer
-    if (this.displayMode === 'segments') {
-      // Display polygons
-      const features = this.geoJsonData.features.map((feature, index) => {
-        return {
-          geometry: {
-            type: "polygon",
-            rings: feature.geometry.coordinates[0],
-            spatialReference: { wkid: 4326 }
-          },
-          attributes: {
-            objectid: index + 1,
-            value: feature.properties.value || 'Unknown'
-          }
-        };
-      });
-
-      featureLayer.applyEdits({
-        addFeatures: features
-      });
-    } else if (this.displayMode === 'centroids') {
-      // Display centroids
-      const features = this.geoJsonData.features.map((feature, index) => {
-        const coordinates = feature.geometry.coordinates[0];
-        const centroid = this.calculateCentroid(coordinates);
-
-        return {
-          geometry: {
-            type: "point",
-            longitude: centroid[0],
-            latitude: centroid[1],
-            spatialReference: { wkid: 4326 }
-          },
-          attributes: {
-            objectid: index + 1,
-            value: feature.properties.value || 'Unknown'
-          }
-        };
-      });
-
-      featureLayer.applyEdits({
-        addFeatures: features
-      });
-    }
-
-    // Remove old layer if exists
-    if (this.editableLayer) {
-      this.view.map.remove(this.editableLayer);
-    }
-
-    // Add new layer to map
-    this.view.map.add(featureLayer);
-    this.editableLayer = featureLayer;
-  }
-
-  calculateCentroid(coordinates) {
-    let sumX = 0;
-    let sumY = 0;
-    const len = coordinates.length - 1; // Subtract 1 because in polygons, last point equals first point
-
-    for (let i = 0; i < len; i++) {
-      sumX += coordinates[i][0];
-      sumY += coordinates[i][1];
-    }
-
-    return [sumX / len, sumY / len];
   }
 }
 
