@@ -60,11 +60,12 @@ function convertBoundingBoxToGeographic(bbox) {
 }
 
 class ObjectDetectionPanel {
-  constructor(detectionParameters, displayGeojsonData, geojsonLayer) {
+  constructor(detectionParameters,displayGeojsonData,  geojsonLayer) {
     this.view = detectionParameters.view;
+    this.textDetectionLayer = detectionParameters.textDetectionLayer,
+    this.pointDetectionLayer = detectionParameters.pointDetectionLayer,
     this.detectionParameters = detectionParameters;
     this.textPrompt = '';
-    this.pointPosition = 'bottom-right';
     this.zoomLevel = 20;
     this.boxThreshold = 0.24;
     this.textThreshold = 0.24;
@@ -77,6 +78,16 @@ class ObjectDetectionPanel {
       displayMode: 'segments',
     };
     this.editableLayer = geojsonLayer;
+    
+    // points prompt related
+    this.pointPromptParameters = {
+      includePoints : [],
+      excludePoints :[],
+      currentMode : null,
+      deleteMode : false,
+    }
+
+        
     this.init();
   }
 
@@ -180,9 +191,29 @@ class ObjectDetectionPanel {
     });
 
     // Reset button
-    const resetButton = this.panel.querySelector('#reset-btn');
-    resetButton.addEventListener('click', () => {
+    this.panel.querySelector('#reset-btn').addEventListener('click', () => {
       this.resetSettings();
+    });
+    this.panel.querySelector('#points-reset-btn').addEventListener('click', () => {
+      this.resetSettings();
+    });
+
+    // Tab switching
+    const tabButtons = this.panel.querySelectorAll('.tab-btn');
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        // Remove active class from all buttons and panes
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        this.panel.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+
+        // Add active class to clicked button and corresponding pane
+        button.classList.add('active');
+        const tabId = button.dataset.tab;
+        this.panel.querySelector(`#${tabId}-tab`).classList.add('active');
+
+        //reset panel
+        this.resetSettings();
+      });
     });
 
     // Detect button
@@ -191,8 +222,48 @@ class ObjectDetectionPanel {
       e.stopPropagation();
       this.handleDetect();
     });
-  }
 
+    //Add points button
+    this.panel.querySelector('#includeMode').addEventListener('click', () => {
+      if (this.pointPromptParameters.deleteMode) {
+        this.pointPromptParameters.deleteMode = false;
+      }
+      this.pointPromptParameters.currentMode = this.pointPromptParameters.currentMode === 'include' ? null : 'include';
+      this.updatePointButtonStates();
+      this.view.cursor = this.pointPromptParameters.currentMode ? "crosshair" : "default";
+    });
+
+    this.panel.querySelector('#excludeMode').addEventListener('click', () => {
+      if (this.pointPromptParameters.deleteMode) {
+        this.pointPromptParameters.deleteMode = false;
+      }
+      this.pointPromptParameters.currentMode = this.pointPromptParameters.currentMode === 'exclude' ? null : 'exclude';
+      this.updatePointButtonStates();
+      this.view.cursor = this.pointPromptParameters.currentMode ? "crosshair" : "default";
+    });
+
+    this.panel.querySelector('#deleteMode').addEventListener('click', () => {
+      this.pointPromptParameters.deleteMode = !this.pointPromptParameters.deleteMode;
+      if (this.pointPromptParameters.deleteMode) {
+        this.pointPromptParameters.currentMode = null;
+        this.view.cursor = "not-allowed";
+      } else {
+        this.view.cursor = "default";
+      }
+      this.updatePointButtonStates();
+    });           
+
+  }
+  
+  updatePointButtonStates = () => {
+    const includeButton = this.panel.querySelector('#includeMode');
+    const excludeButton = this.panel.querySelector('#excludeMode');
+    const deleteButton = this.panel.querySelector('#deleteMode');
+
+    includeButton.className = `mode-button ${this.pointPromptParameters.currentMode === 'include' ? 'active' : ''}`;
+    excludeButton.className = `mode-button ${this.pointPromptParameters.currentMode === 'exclude' ? 'active' : ''}`;
+    deleteButton.className = `mode-button ${this.pointPromptParameters.deleteMode ? 'delete-mode' : ''}`;
+  };
 
   async addStyles() {
     const style = document.createElement('style');
@@ -279,24 +350,46 @@ class ObjectDetectionPanel {
     this.displayGeojsonData(this.geoJsonData, this.displayParameters);
   }
 
-  resetSettings() {
+  resetSettings() {  
+    this.textPrompt = '';
+    this.zoomLevel = 20;
     this.boxThreshold = 0.24;
     this.textThreshold = 0.24;
-    this.opacity = 0.9;
-    this.color = '#3333CC';
+    this.geoJsonData = null;
+    this.displayParameters = {
+      color: '#3333CC',
+      opacity: 0.9,
+      displayMode: 'segments',
+    };
+    this.pointPromptParameters = {
+      includePoints : [],
+      excludePoints :[],
+      currentMode : null,
+      deleteMode : false,
+    }
 
     // Update UI elements
+    //text tab
     this.panel.querySelector('#box-threshold').value = this.boxThreshold;
     this.panel.querySelector('#box-threshold-value').textContent = this.boxThreshold.toFixed(2);
     this.panel.querySelector('#text-threshold').value = this.textThreshold;
     this.panel.querySelector('#text-threshold-value').textContent = this.textThreshold.toFixed(2);
-    this.panel.querySelector('#opacity').value = this.opacity;
-    this.panel.querySelector('#opacity-value').textContent = this.opacity.toFixed(1);
-    this.panel.querySelector('#color-picker').value = this.color;
+    this.panel.querySelector('#zoom-level').value = '20';
+    this.panel.querySelector('#opacity').value = this.displayParameters.opacity;
+    this.panel.querySelector('#opacity-value').textContent = this.displayParameters.opacity.toFixed(1);
+    this.panel.querySelector('#color-picker').value = this.displayParameters.color;
+    this.panel.querySelector('#display-segments').checked = true;
+    this.panel.querySelector('#text-prompt').value = '';
+    //points tab
+    this.panel.querySelector('#points-box-threshold').value = this.boxThreshold;
+    this.panel.querySelector('#points-box-threshold-value').textContent = this.boxThreshold.toFixed(2);
+    this.panel.querySelector('#points-zoom-level').value = '20';
+    this.panel.querySelector('#point-opacity').value = this.displayParameters.opacity;
+    this.panel.querySelector('#point-opacity-value').textContent = this.displayParameters.opacity.toFixed(1);
+    this.panel.querySelector('#point-color-picker').value = this.displayParameters.color;
+    this.panel.querySelector('#points-display-segments').checked = true;
+    this.updatePointButtonStates();
 
-    if (this.geoJsonData) {      
-      this.displayGeojsonData(geoJson, this.displayParameters);
-    }
   }
 }
 

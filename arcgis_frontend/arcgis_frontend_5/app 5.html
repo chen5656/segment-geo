@@ -257,7 +257,7 @@
           pointDetectionLayer: pointDetectionLayer,
         };
 
-        const objectDetectionPanel = new module.ObjectDetectionPanel(detectionParameters, displayGeojsonData, geojsonLayer);        
+        const objectDetectionPanel = new module.ObjectDetectionPanel(detectionParameters, displayGeojsonData, geojsonLayer, Graphic);        
 
         function getNewGraphicLayer(title){
           const lyr = new GraphicsLayer({ title: title });
@@ -300,9 +300,17 @@
             textDetectionLayer.removeAll();
             detectionParameters.geometry = null;
           }
-
         });
 
+        // map clicked to update point list for point prompt.
+        view.on("click", (event) => {
+          if (!objectDetectionPanel.panelVisible || !objectDetectionPanel.panel.querySelector('#points-tab').classList.contains('active')) {
+            return;
+          }
+          event.stopPropagation();
+          updatePoints(objectDetectionPanel.detectionParameters, objectDetectionPanel.pointPromptParameters, view, event, Graphic);
+
+        });
       });
 
 

@@ -152,3 +152,100 @@ function calculateCentroid(coordinates) {
 
   return [sumX / len, sumY / len];
 }
+
+function updatePoints(detectionParameters, pointPromptParameters, view, event, Graphic){
+  let {currentMode, deleteMode} = pointPromptParameters;
+
+  const pointsLayer = detectionParameters.pointDetectionLayer
+
+  if (deleteMode) {
+    const screenPoint = {
+      x: event.x,
+      y: event.y
+    };
+
+    view.hitTest(screenPoint).then((response) => {
+      const graphics = response.results?.filter(result => 
+        result.graphic.layer === pointsLayer
+      );
+
+      if (graphics && graphics.length > 0) {
+        const point = [graphics[0].graphic.geometry.longitude, graphics[0].graphic.geometry.latitude];
+        pointPromptParameters.includePoints = pointPromptParameters.includePoints.filter(p => 
+          Math.abs(p[0] - point[0]) > 0.0000001 || Math.abs(p[1] - point[1]) > 0.0000001
+        );
+        pointPromptParameters.excludePoints = pointPromptParameters.excludePoints.filter(p => 
+          Math.abs(p[0] - point[0]) > 0.0000001 || Math.abs(p[1] - point[1]) > 0.0000001
+        );
+        updatePointsGraphics(pointsLayer, pointPromptParameters.includePoints, pointPromptParameters.excludePoints, Graphic);
+      }
+    });
+  } else if (currentMode) {
+    const mapPoint = view.toMap({x: event.x, y: event.y});
+    const point = [mapPoint.longitude, mapPoint.latitude];
+    
+    if (currentMode === 'include') {
+      pointPromptParameters.includePoints.push(point);
+    } else {
+      pointPromptParameters.excludePoints.push(point);
+    }
+    updatePointsGraphics(pointsLayer, pointPromptParameters.includePoints, pointPromptParameters.excludePoints, Graphic);
+  }
+}
+
+
+ function updatePointsGraphics(pointsLayer, includePoints, excludePoints, Graphic) {
+    pointsLayer.removeAll();
+  
+    includePoints.forEach(coords => {
+      const point = {
+        type: "point",
+        longitude: coords[0],
+        latitude: coords[1]
+      };
+      
+      const markerSymbol = {
+        type: "simple-marker",
+        style: "circle",
+        color: [0, 255, 0, 0.8],  // 绿色
+        size: "12px",
+        outline: {
+          color: [255, 255, 255, 0.8],
+          width: 2
+        }
+      };
+      
+      const graphic = new Graphic({
+        geometry: point,
+        symbol: markerSymbol
+      });
+      
+      pointsLayer.add(graphic);
+    });
+
+    excludePoints.forEach(coords => {
+      const point = {
+        type: "point",
+        longitude: coords[0],
+        latitude: coords[1]
+      };
+      
+      const markerSymbol = {
+        type: "simple-marker",
+        style: "circle",
+        color: [255, 0, 0, 0.8],  // 红色
+        size: "12px",
+        outline: {
+          color: [255, 255, 255, 0.8],
+          width: 2
+        }
+      };
+      
+      const graphic = new Graphic({
+        geometry: point,
+        symbol: markerSymbol
+      });
+      
+      pointsLayer.add(graphic);
+    });
+  }
