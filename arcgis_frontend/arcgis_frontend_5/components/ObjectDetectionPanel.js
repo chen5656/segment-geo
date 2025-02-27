@@ -1,7 +1,7 @@
 class ObjectDetectionPanel {
   constructor(detectionParameters, displayGeojsonData, geojsonLayer) {
-    this.textPromptUrl = "http://localhost:8001/api/v1/predict";
-    this.pointsPromptUrl = ''
+    this.textPromptUrl = "http://localhost:8001/api/v1/predict/text";
+    this.pointsPromptUrl = "http://localhost:8001/api/v1/predict/points";
     this.view = detectionParameters.view;
     this.detectionParameters = detectionParameters;
     this.textPrompt = '';
@@ -250,15 +250,17 @@ class ObjectDetectionPanel {
       detectButton.disabled = true;
 
       const boundingBox = convertBoundingBoxToGeographic(extentToBoundingBox(bbox));
-  
+
+      const testPrompts = this.textPrompt.split(",").map((prompt) => ({
+        value: prompt.trim(),
+        box_threshold: this.boxThreshold,
+        text_threshold: this.textThreshold
+      }))
       const requestBody = {
         "bounding_box": boundingBox,
-        "text_prompt": this.textPrompt,
+        "text_prompts": testPrompts,
         "zoom_level": this.zoomLevel,
-        "box_threshold": this.boxThreshold,
-        "text_threshold": this.textThreshold,
       };  
-  
       await this.sendPredictRequest(this.textPromptUrl, requestBody);
       
     } catch (error) {

@@ -30,12 +30,10 @@ def health() -> dict:
                 status_code=200)
 async def predict_text(request: schemas.PredictionRequest):
     try:
-        result = await textPredictor.make_prediction(
+        result = await textPredictor.make_predictions(
             bounding_box=request.bounding_box,
-            text_prompt=request.text_prompt,
+            text_prompts=request.text_prompts,
             zoom_level=request.zoom_level,
-            box_threshold=request.box_threshold,
-            text_threshold=request.text_threshold,
         )
         if result.get("error") is not None:
             logger.warning(f"Prediction validation error: {result.get('error')}")
