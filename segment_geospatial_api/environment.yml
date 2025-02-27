@@ -1,22 +1,18 @@
-name: geo_app_env
+name: geo
 channels:
   - conda-forge
   - defaults
-  - pytorch
-  - nvidia
 dependencies:
-  - python=3.11
-  - gdal
+  - python
   - segment-geospatial
+  - groundingdino-py
+  - segment-anything-fast
   - pydantic
   - fastapi
   - uvicorn
   - loguru
-  - typing_extensions
+  - pytorch
   - pip
   - pip:
-    - groundingdino-py
-    - torch
-    - torchvision
     - python-multipart>=0.0.5
     - pydantic_settings
