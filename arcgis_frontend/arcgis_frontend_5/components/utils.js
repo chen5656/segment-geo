@@ -1,4 +1,65 @@
 
+/**
+ * Converts an Esri Extent object to a bounding box array
+ * @param {Object} extent - Esri Extent object containing xmin, ymin, xmax, ymax
+ * @returns {Array} Bounding box array in [west, south, east, north] format
+ */
+function extentToBoundingBox(extent) {
+  // Input validation
+  if (!extent || typeof extent !== 'object') {
+    throw new Error('Invalid extent object');
+  }
+
+  // Check if required properties exist
+  if (!('xmin' in extent) || !('ymin' in extent) ||
+    !('xmax' in extent) || !('ymax' in extent)) {
+    throw new Error('Extent object missing required properties');
+  }
+
+  // Convert to bounding box format [west, south, east, north]
+  return [
+    extent.xmin,  // west
+    extent.ymin,  // south
+    extent.xmax,  // east
+    extent.ymax   // north
+  ];
+}
+
+/**
+ * Converts Web Mercator coordinates to Geographic coordinates (lat/long)
+ * @param {number} x - Web Mercator X coordinate
+ * @param {number} y - Web Mercator Y coordinate
+ * @returns {Array} Array containing [longitude, latitude]
+ */
+function webMercatorToGeographic(x, y) {
+  // Earth's radius in meters
+  const EARTH_RADIUS = 6378137;
+
+  // Convert X coordinate to longitude
+  const longitude = (x / EARTH_RADIUS) * (180 / Math.PI);
+
+  // Convert Y coordinate to latitude
+  const latitude = (Math.PI / 2 - 2 * Math.atan(Math.exp(-y / EARTH_RADIUS))) * (180 / Math.PI);
+
+  return [longitude, latitude];
+}
+
+/**
+* Converts Web Mercator bounding box to Geographic bounding box
+* @param {Array} bbox - Bounding box in Web Mercator [west, south, east, north]
+* @returns {Array} Bounding box in Geographic coordinates [west, south, east, north]
+*/
+function convertBoundingBoxToGeographic(bbox) {
+  // Convert southwest corner
+  const [westLong, southLat] = webMercatorToGeographic(bbox[0], bbox[1]);
+
+  // Convert northeast corner
+  const [eastLong, northLat] = webMercatorToGeographic(bbox[2], bbox[3]);
+
+  // Return in [west, south, east, north] format
+  return [westLong, southLat, eastLong, northLat];
+}
+
 const getGeojsonLayer = (FeatureLayer, geoJsonData, displayParameters, title='Detection Result') => {
     const color = displayParameters?.color || '#ff0000';
     const opacity = displayParameters?.opacity || 0.5;
@@ -13,10 +74,6 @@ const getGeojsonLayer = (FeatureLayer, geoJsonData, displayParameters, title='De
         {
           name: "objectid",
           type: "oid"
-        },
-        {
-          name: "value",
-          type: "string"
         }
       ],
       renderer: displayMode === 'segments' ? 
@@ -59,10 +116,8 @@ const getGeojsonLayer = (FeatureLayer, geoJsonData, displayParameters, title='De
         },
       geometryType: displayMode === 'segments' ? "polygon" : "point",
       popupTemplate: {
-        title: "{value}",
-        content: displayMode === 'segments' ? 
-          "Polygon Area: {value}" : 
-          "Point Location: {value}"
+        title: "{objectid}",
+        content: "objectid: {objectid}"
       }
     });
   
@@ -77,8 +132,7 @@ const getGeojsonLayer = (FeatureLayer, geoJsonData, displayParameters, title='De
             spatialReference: { wkid: 4326 }
           },
           attributes: {
-            objectid: index + 1,
-            value: feature.properties.value || 'Unknown'
+            objectid: index + 1
           }
         };
       });
@@ -100,8 +154,7 @@ const getGeojsonLayer = (FeatureLayer, geoJsonData, displayParameters, title='De
             spatialReference: { wkid: 4326 }
           },
           attributes: {
-            objectid: index + 1,
-            value: feature.properties.value || 'Unknown'
+            objectid: index + 1
           }
         };
       });
@@ -114,7 +167,7 @@ const getGeojsonLayer = (FeatureLayer, geoJsonData, displayParameters, title='De
 }
 
 function getNewSketch(Sketch, view, graphicsLayer, detectionParameters){
-  sketch = new Sketch({
+  const sketch = new Sketch({
     layer: graphicsLayer,
     view: view,
     container: "sketch_container",
@@ -137,6 +190,7 @@ function getNewSketch(Sketch, view, graphicsLayer, detectionParameters){
       detectionParameters.geometry = event.graphic.geometry;
     }
   });
+  return sketch;
 };
 
 
@@ -153,10 +207,11 @@ function calculateCentroid(coordinates) {
   return [sumX / len, sumY / len];
 }
 
-function updatePoints(detectionParameters, pointPromptParameters, view, event, Graphic){
-  let {currentMode, deleteMode} = pointPromptParameters;
+function updatePoints(detectionParameters, pointsPromptParameters, view, event, Graphic){
+  debugger
+  let {currentMode, deleteMode} = pointsPromptParameters;
 
-  const pointsLayer = detectionParameters.pointDetectionLayer
+  const pointsLayer = detectionParameters.pointsDetectionLayer
 
   if (deleteMode) {
     const screenPoint = {
@@ -171,13 +226,13 @@ function updatePoints(detectionParameters, pointPromptParameters, view, event, G
 
       if (graphics && graphics.length > 0) {
         const point = [graphics[0].graphic.geometry.longitude, graphics[0].graphic.geometry.latitude];
-        pointPromptParameters.includePoints = pointPromptParameters.includePoints.filter(p => 
+        pointsPromptParameters.includePoints = pointsPromptParameters.includePoints.filter(p => 
           Math.abs(p[0] - point[0]) > 0.0000001 || Math.abs(p[1] - point[1]) > 0.0000001
         );
-        pointPromptParameters.excludePoints = pointPromptParameters.excludePoints.filter(p => 
+        pointsPromptParameters.excludePoints = pointsPromptParameters.excludePoints.filter(p => 
           Math.abs(p[0] - point[0]) > 0.0000001 || Math.abs(p[1] - point[1]) > 0.0000001
         );
-        updatePointsGraphics(pointsLayer, pointPromptParameters.includePoints, pointPromptParameters.excludePoints, Graphic);
+        updatePointsGraphics(pointsLayer, pointsPromptParameters.includePoints, pointsPromptParameters.excludePoints, Graphic);
       }
     });
   } else if (currentMode) {
@@ -185,11 +240,11 @@ function updatePoints(detectionParameters, pointPromptParameters, view, event, G
     const point = [mapPoint.longitude, mapPoint.latitude];
     
     if (currentMode === 'include') {
-      pointPromptParameters.includePoints.push(point);
+      pointsPromptParameters.includePoints.push(point);
     } else {
-      pointPromptParameters.excludePoints.push(point);
+      pointsPromptParameters.excludePoints.push(point);
     }
-    updatePointsGraphics(pointsLayer, pointPromptParameters.includePoints, pointPromptParameters.excludePoints, Graphic);
+    updatePointsGraphics(pointsLayer, pointsPromptParameters.includePoints, pointsPromptParameters.excludePoints, Graphic);
   }
 }
 

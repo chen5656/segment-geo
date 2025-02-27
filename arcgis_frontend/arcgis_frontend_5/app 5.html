@@ -249,15 +249,16 @@
       // Object Detection Panel
       import('./components/ObjectDetectionPanel.js').then(module => {
         const textDetectionLayer = getNewGraphicLayer('text detection input layer');
-        const pointDetectionLayer = getNewGraphicLayer('point detection input layer');
+        const pointsDetectionLayer = getNewGraphicLayer('point detection input layer');
         let geojsonLayer = null;
         const detectionParameters = {
           view: view,
+          sketch: null,
           textDetectionLayer: textDetectionLayer,
-          pointDetectionLayer: pointDetectionLayer,
+          pointsDetectionLayer: pointsDetectionLayer,
         };
 
-        const objectDetectionPanel = new module.ObjectDetectionPanel(detectionParameters, displayGeojsonData, geojsonLayer, Graphic);        
+        const objectDetectionPanel = new module.ObjectDetectionPanel(detectionParameters, displayGeojsonData, geojsonLayer);        
 
         function getNewGraphicLayer(title){
           const lyr = new GraphicsLayer({ title: title });
@@ -267,7 +268,7 @@
 
         function displayGeojsonData(geoJson, displayParameters) {
           detectionParameters.textDetectionLayer.removeAll();
-          detectionParameters.pointDetectionLayer.removeAll();          
+          detectionParameters.pointsDetectionLayer.removeAll();          
           // Remove old layer if exists
           if (geojsonLayer) {
             map.remove(geojsonLayer);            
@@ -289,26 +290,27 @@
         toolButton.addEventListener("click", () => {
           let toolActive = (toolButton.textContent === "Activate Object Detection Tool");
           toolButton.textContent = toolActive ? "Deactivate Tool" : "Activate Object Detection Tool";
-          let sketch;
           if (toolActive) {
             objectDetectionPanel.show();
-            sketch = getNewSketch(Sketch, view, textDetectionLayer, detectionParameters);
+            detectionParameters.sketch = getNewSketch(Sketch, view, textDetectionLayer, detectionParameters);
+            
 
           } else {
             objectDetectionPanel.hide();
-            view.ui.remove(sketch);
             textDetectionLayer.removeAll();
+            detectionParameters.sketch.cancel();
+            view.ui.remove(sketch);
             detectionParameters.geometry = null;
           }
         });
 
-        // map clicked to update point list for point prompt.
+        // map clicked to update point list for points prompt.
         view.on("click", (event) => {
           if (!objectDetectionPanel.panelVisible || !objectDetectionPanel.panel.querySelector('#points-tab').classList.contains('active')) {
             return;
           }
           event.stopPropagation();
-          updatePoints(objectDetectionPanel.detectionParameters, objectDetectionPanel.pointPromptParameters, view, event, Graphic);
+          updatePoints(objectDetectionPanel.detectionParameters, objectDetectionPanel.pointsPromptParameters, view, event, Graphic);
 
         });
       });

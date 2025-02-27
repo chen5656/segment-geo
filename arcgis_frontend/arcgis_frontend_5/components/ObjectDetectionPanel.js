@@ -1,69 +1,8 @@
-/**
- * Converts an Esri Extent object to a bounding box array
- * @param {Object} extent - Esri Extent object containing xmin, ymin, xmax, ymax
- * @returns {Array} Bounding box array in [west, south, east, north] format
- */
-function extentToBoundingBox(extent) {
-  // Input validation
-  if (!extent || typeof extent !== 'object') {
-    throw new Error('Invalid extent object');
-  }
-
-  // Check if required properties exist
-  if (!('xmin' in extent) || !('ymin' in extent) ||
-    !('xmax' in extent) || !('ymax' in extent)) {
-    throw new Error('Extent object missing required properties');
-  }
-
-  // Convert to bounding box format [west, south, east, north]
-  return [
-    extent.xmin,  // west
-    extent.ymin,  // south
-    extent.xmax,  // east
-    extent.ymax   // north
-  ];
-}
-
-/**
- * Converts Web Mercator coordinates to Geographic coordinates (lat/long)
- * @param {number} x - Web Mercator X coordinate
- * @param {number} y - Web Mercator Y coordinate
- * @returns {Array} Array containing [longitude, latitude]
- */
-function webMercatorToGeographic(x, y) {
-  // Earth's radius in meters
-  const EARTH_RADIUS = 6378137;
-
-  // Convert X coordinate to longitude
-  const longitude = (x / EARTH_RADIUS) * (180 / Math.PI);
-
-  // Convert Y coordinate to latitude
-  const latitude = (Math.PI / 2 - 2 * Math.atan(Math.exp(-y / EARTH_RADIUS))) * (180 / Math.PI);
-
-  return [longitude, latitude];
-}
-
-/**
-* Converts Web Mercator bounding box to Geographic bounding box
-* @param {Array} bbox - Bounding box in Web Mercator [west, south, east, north]
-* @returns {Array} Bounding box in Geographic coordinates [west, south, east, north]
-*/
-function convertBoundingBoxToGeographic(bbox) {
-  // Convert southwest corner
-  const [westLong, southLat] = webMercatorToGeographic(bbox[0], bbox[1]);
-
-  // Convert northeast corner
-  const [eastLong, northLat] = webMercatorToGeographic(bbox[2], bbox[3]);
-
-  // Return in [west, south, east, north] format
-  return [westLong, southLat, eastLong, northLat];
-}
-
 class ObjectDetectionPanel {
-  constructor(detectionParameters,displayGeojsonData,  geojsonLayer) {
+  constructor(detectionParameters, displayGeojsonData, geojsonLayer) {
+    this.textPromptUrl = "http://localhost:8001/api/v1/predict";
+    this.pointsPromptUrl = ''
     this.view = detectionParameters.view;
-    this.textDetectionLayer = detectionParameters.textDetectionLayer,
-    this.pointDetectionLayer = detectionParameters.pointDetectionLayer,
     this.detectionParameters = detectionParameters;
     this.textPrompt = '';
     this.zoomLevel = 20;
@@ -78,15 +17,14 @@ class ObjectDetectionPanel {
       displayMode: 'segments',
     };
     this.editableLayer = geojsonLayer;
-    
+
     // points prompt related
-    this.pointPromptParameters = {
+    this.pointsPromptParameters = {
       includePoints : [],
       excludePoints :[],
       currentMode : null,
       deleteMode : false,
     }
-
         
     this.init();
   }
@@ -217,35 +155,38 @@ class ObjectDetectionPanel {
     });
 
     // Detect button
-    const detectButton = this.panel.querySelector('#detect-btn');
-    detectButton.addEventListener('click', (e) => {
+    this.panel.querySelector('#detect-btn').addEventListener('click', (e) => {
       e.stopPropagation();
       this.handleDetect();
+    });
+    this.panel.querySelector('#points-detect-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.handlePointsDetect();
     });
 
     //Add points button
     this.panel.querySelector('#includeMode').addEventListener('click', () => {
-      if (this.pointPromptParameters.deleteMode) {
-        this.pointPromptParameters.deleteMode = false;
+      if (this.pointsPromptParameters.deleteMode) {
+        this.pointsPromptParameters.deleteMode = false;
       }
-      this.pointPromptParameters.currentMode = this.pointPromptParameters.currentMode === 'include' ? null : 'include';
+      this.pointsPromptParameters.currentMode = this.pointsPromptParameters.currentMode === 'include' ? null : 'include';
       this.updatePointButtonStates();
-      this.view.cursor = this.pointPromptParameters.currentMode ? "crosshair" : "default";
+      this.view.cursor = this.pointsPromptParameters.currentMode ? "crosshair" : "default";
     });
 
     this.panel.querySelector('#excludeMode').addEventListener('click', () => {
-      if (this.pointPromptParameters.deleteMode) {
-        this.pointPromptParameters.deleteMode = false;
+      if (this.pointsPromptParameters.deleteMode) {
+        this.pointsPromptParameters.deleteMode = false;
       }
-      this.pointPromptParameters.currentMode = this.pointPromptParameters.currentMode === 'exclude' ? null : 'exclude';
+      this.pointsPromptParameters.currentMode = this.pointsPromptParameters.currentMode === 'exclude' ? null : 'exclude';
       this.updatePointButtonStates();
-      this.view.cursor = this.pointPromptParameters.currentMode ? "crosshair" : "default";
+      this.view.cursor = this.pointsPromptParameters.currentMode ? "crosshair" : "default";
     });
 
     this.panel.querySelector('#deleteMode').addEventListener('click', () => {
-      this.pointPromptParameters.deleteMode = !this.pointPromptParameters.deleteMode;
-      if (this.pointPromptParameters.deleteMode) {
-        this.pointPromptParameters.currentMode = null;
+      this.pointsPromptParameters.deleteMode = !this.pointsPromptParameters.deleteMode;
+      if (this.pointsPromptParameters.deleteMode) {
+        this.pointsPromptParameters.currentMode = null;
         this.view.cursor = "not-allowed";
       } else {
         this.view.cursor = "default";
@@ -260,9 +201,9 @@ class ObjectDetectionPanel {
     const excludeButton = this.panel.querySelector('#excludeMode');
     const deleteButton = this.panel.querySelector('#deleteMode');
 
-    includeButton.className = `mode-button ${this.pointPromptParameters.currentMode === 'include' ? 'active' : ''}`;
-    excludeButton.className = `mode-button ${this.pointPromptParameters.currentMode === 'exclude' ? 'active' : ''}`;
-    deleteButton.className = `mode-button ${this.pointPromptParameters.deleteMode ? 'delete-mode' : ''}`;
+    includeButton.className = `mode-button ${this.pointsPromptParameters.currentMode === 'include' ? 'active' : ''}`;
+    excludeButton.className = `mode-button ${this.pointsPromptParameters.currentMode === 'exclude' ? 'active' : ''}`;
+    deleteButton.className = `mode-button ${this.pointsPromptParameters.deleteMode ? 'delete-mode' : ''}`;
   };
 
   async addStyles() {
@@ -318,7 +259,7 @@ class ObjectDetectionPanel {
         "text_threshold": this.textThreshold,
       };  
   
-      await this.sendTextPredictRequest(requestBody);
+      await this.sendPredictRequest(this.textPromptUrl, requestBody);
       
     } catch (error) {
       throw error;      
@@ -327,8 +268,35 @@ class ObjectDetectionPanel {
       detectButton.disabled = false;
     }
   }
-          
-  async sendTextPredictRequest(requestBody) {
+        
+  async handlePointsDetect() {
+    if (this.pointsPromptParameters.includePoints.length === 0) {
+      alert('Please add at least one include point');
+      return;
+    }
+    const detectButton = this.panel.querySelector('#points-detect-btn');    
+    try {
+      detectButton.classList.add('loading');
+      detectButton.disabled = true;
+
+      const requestBody = {
+        zoom_level: this.zoomLevel,
+        box_threshold: this.boxThreshold,
+        points_include: this.pointsPromptParameters.includePoints,
+        points_exclude: this.pointsPromptParameters.excludePoints
+      };
+
+      await this.sendPredictRequest(url, requestBody);
+      
+    } catch (error) {
+      throw error;      
+    } finally{
+      detectButton.classList.remove('loading');
+      detectButton.disabled = false;
+    }
+  }
+        
+  async sendPredictRequest(url, requestBody) {
 
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
@@ -342,7 +310,7 @@ class ObjectDetectionPanel {
       redirect: "follow"
     };
 
-    const response = await fetch("http://localhost:8001/api/v1/predict", requestOptions);
+    const response = await fetch(url, requestOptions);
     if (!response.ok) {
       throw new Error("Network response was not ok while sending object detection request.");
     }
@@ -361,7 +329,7 @@ class ObjectDetectionPanel {
       opacity: 0.9,
       displayMode: 'segments',
     };
-    this.pointPromptParameters = {
+    this.pointsPromptParameters = {
       includePoints : [],
       excludePoints :[],
       currentMode : null,
@@ -380,17 +348,20 @@ class ObjectDetectionPanel {
     this.panel.querySelector('#color-picker').value = this.displayParameters.color;
     this.panel.querySelector('#display-segments').checked = true;
     this.panel.querySelector('#text-prompt').value = '';
+    this.detectionParameters.sketch.cancel();
+    this.detectionParameters.textDetectionLayer.removeAll();
     //points tab
     this.panel.querySelector('#points-box-threshold').value = this.boxThreshold;
     this.panel.querySelector('#points-box-threshold-value').textContent = this.boxThreshold.toFixed(2);
     this.panel.querySelector('#points-zoom-level').value = '20';
-    this.panel.querySelector('#point-opacity').value = this.displayParameters.opacity;
-    this.panel.querySelector('#point-opacity-value').textContent = this.displayParameters.opacity.toFixed(1);
-    this.panel.querySelector('#point-color-picker').value = this.displayParameters.color;
+    this.panel.querySelector('#points-opacity').value = this.displayParameters.opacity;
+    this.panel.querySelector('#points-opacity-value').textContent = this.displayParameters.opacity.toFixed(1);
+    this.panel.querySelector('#points-color-picker').value = this.displayParameters.color;
     this.panel.querySelector('#points-display-segments').checked = true;
     this.updatePointButtonStates();
 
   }
+
 }
 
 // Export the class
