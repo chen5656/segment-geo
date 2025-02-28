@@ -1,5 +1,5 @@
 class ObjectDetectionPanel {
-  constructor(detectionParameters, displayGeojsonData, geojsonLayer) {
+  constructor(detectionParameters, displayPredictResult) {
     this.textPromptUrl = "http://localhost:8001/api/v1/predict/text";
     this.pointsPromptUrl = "http://localhost:8001/api/v1/predict/points";
     this.view = detectionParameters.view;
@@ -8,15 +8,14 @@ class ObjectDetectionPanel {
     this.zoomLevel = 20;
     this.boxThreshold = 0.24;
     this.textThreshold = 0.24;
-    this.geoJsonData = null;
+    this.predictResult = null;
     this.panelVisible = false;
-    this.displayGeojsonData = displayGeojsonData;
+    this.displayPredictResult = displayPredictResult;
     this.displayParameters = {
       color: '#3333CC',
       opacity: 0.9,
       displayMode: 'segments',
     };
-    this.editableLayer = geojsonLayer;
 
     // points prompt related
     this.pointsPromptParameters = {
@@ -56,6 +55,7 @@ class ObjectDetectionPanel {
       });
 
       document.body.appendChild(this.panel);
+      
     } catch (error) {
       console.error('Failed to load panel template:', error);
       throw error; // Propagate error to init method
@@ -98,32 +98,38 @@ class ObjectDetectionPanel {
     });
 
     // Opacity slider
-    const opacityInput = this.panel.querySelector('#opacity');
-    const opacityValue = this.panel.querySelector('#opacity-value');
-    opacityInput.addEventListener('input', (e) => {
-      this.displayParameters.opacity = parseFloat(e.target.value);
-      opacityValue.textContent = this.displayParameters.opacity.toFixed(1);
-      if (this.geoJsonData) {
-        this.displayGeojsonData(this.geoJsonData, this.displayParameters);
-      }
+    const opacityInputs = this.panel.querySelectorAll('input[name="opacity"]');
+    const opacityValues = this.panel.querySelectorAll('input[name="opacity-value"]');
+    opacityInputs.forEach(opacityInput => {
+      opacityInput.addEventListener('input', (e) => {
+        this.displayParameters.opacity = parseFloat(e.target.value);
+        opacityValues.forEach(opacityValue => {
+          opacityValue.textContent = this.displayParameters.opacity.toFixed(1);
+        });
+        if (this.predictResult) {
+          this.displayPredictResult(this.predictResult, this.displayParameters);
+        }
+      });
     });
 
     // Color picker
-    const colorPicker = this.panel.querySelector('#color-picker');
-    colorPicker.addEventListener('input', (e) => {
-      this.displayParameters.color = e.target.value;
-      if (this.geoJsonData) {        
-        this.displayGeojsonData(this.geoJsonData, this.displayParameters);
-      }
+    const colorPickers = this.panel.querySelectorAll('input[name="color-picker"]');
+    colorPickers.forEach(colorPicker => {
+      colorPicker.addEventListener('input', (e) => {
+        this.displayParameters.color = e.target.value;
+        if (this.predictResult) {
+          this.displayPredictResult(this.predictResult, this.displayParameters);
+        }
+      });
     });
 
     // Display mode radio buttons
-    const displayModeInputs = this.panel.querySelectorAll('input[name="display-mode"]');
+    const displayModeInputs = this.panel.querySelectorAll('input[name="text-display-mode"], input[name="points-display-mode"]');
     displayModeInputs.forEach(input => {
       input.addEventListener('change', (e) => {
         this.displayParameters.displayMode = e.target.value;
-        if (this.geoJsonData) {
-          this.displayGeojsonData(this.geoJsonData, this.displayParameters);
+        if (this.predictResult) {
+          this.displayPredictResult(this.predictResult, this.displayParameters);
         }
       });
     });
@@ -157,7 +163,7 @@ class ObjectDetectionPanel {
     // Detect button
     this.panel.querySelector('#detect-btn').addEventListener('click', (e) => {
       e.stopPropagation();
-      this.handleDetect();
+      this.handleTextDetect();
     });
     this.panel.querySelector('#points-detect-btn').addEventListener('click', (e) => {
       e.stopPropagation();
@@ -238,7 +244,7 @@ class ObjectDetectionPanel {
     }
   }
 
-  async handleDetect() {
+  async handleTextDetect() {
     const bbox = this.detectionParameters?.geometry?.extent;
     if (!this.zoomLevel || !this.textPrompt || !bbox) {
       alert('Please draw a rectangle and enter detection parameters');
@@ -248,6 +254,7 @@ class ObjectDetectionPanel {
     try {
       detectButton.classList.add('loading');
       detectButton.disabled = true;
+      this.disablePanel();
 
       const boundingBox = convertBoundingBoxToGeographic(extentToBoundingBox(bbox));
 
@@ -268,6 +275,7 @@ class ObjectDetectionPanel {
     } finally{
       detectButton.classList.remove('loading');
       detectButton.disabled = false;
+      this.enablePanel();
     }
   }
         
@@ -280,6 +288,7 @@ class ObjectDetectionPanel {
     try {
       detectButton.classList.add('loading');
       detectButton.disabled = true;
+      this.disablePanel();
 
       const requestBody = {
         zoom_level: this.zoomLevel,
@@ -295,6 +304,7 @@ class ObjectDetectionPanel {
     } finally{
       detectButton.classList.remove('loading');
       detectButton.disabled = false;
+      this.enablePanel();
     }
   }
         
@@ -316,8 +326,8 @@ class ObjectDetectionPanel {
     if (!response.ok) {
       throw new Error("Network response was not ok while sending object detection request.");
     }
-    this.geoJsonData = await response.json();
-    this.displayGeojsonData(this.geoJsonData, this.displayParameters);
+    this.predictResult = await response.json();
+    this.displayPredictResult(this.predictResult, this.displayParameters);
   }
 
   resetSettings() {  
@@ -325,7 +335,7 @@ class ObjectDetectionPanel {
     this.zoomLevel = 20;
     this.boxThreshold = 0.24;
     this.textThreshold = 0.24;
-    this.geoJsonData = null;
+    this.predictResult = null;
     this.displayParameters = {
       color: '#3333CC',
       opacity: 0.9,
@@ -339,16 +349,25 @@ class ObjectDetectionPanel {
     }
 
     // Update UI elements
+    this.panel.querySelectorAll('input[name="opacity"]').forEach(input => {
+      input.value = this.displayParameters.opacity;
+    });
+    this.panel.querySelectorAll('span[name="opacity-value"]').forEach(span => {
+      span.textContent = this.displayParameters.opacity.toFixed(1);
+    });
+    this.panel.querySelectorAll('input[name="color-picker"]').forEach(picker => {
+      picker.value = this.displayParameters.color;
+    });
+    this.panel.querySelectorAll('input[name="text-display-mode"], input[name="points-display-mode"]').forEach(radio => {
+      radio.checked = (radio.value === this.displayParameters.displayMode);
+    });
+
     //text tab
     this.panel.querySelector('#box-threshold').value = this.boxThreshold;
     this.panel.querySelector('#box-threshold-value').textContent = this.boxThreshold.toFixed(2);
     this.panel.querySelector('#text-threshold').value = this.textThreshold;
     this.panel.querySelector('#text-threshold-value').textContent = this.textThreshold.toFixed(2);
     this.panel.querySelector('#zoom-level').value = '20';
-    this.panel.querySelector('#opacity').value = this.displayParameters.opacity;
-    this.panel.querySelector('#opacity-value').textContent = this.displayParameters.opacity.toFixed(1);
-    this.panel.querySelector('#color-picker').value = this.displayParameters.color;
-    this.panel.querySelector('#display-segments').checked = true;
     this.panel.querySelector('#text-prompt').value = '';
     this.detectionParameters.sketch.cancel();
     this.detectionParameters.textDetectionLayer.removeAll();
@@ -356,14 +375,29 @@ class ObjectDetectionPanel {
     this.panel.querySelector('#points-box-threshold').value = this.boxThreshold;
     this.panel.querySelector('#points-box-threshold-value').textContent = this.boxThreshold.toFixed(2);
     this.panel.querySelector('#points-zoom-level').value = '20';
-    this.panel.querySelector('#points-opacity').value = this.displayParameters.opacity;
-    this.panel.querySelector('#points-opacity-value').textContent = this.displayParameters.opacity.toFixed(1);
-    this.panel.querySelector('#points-color-picker').value = this.displayParameters.color;
-    this.panel.querySelector('#points-display-segments').checked = true;
     this.updatePointButtonStates();
 
   }
 
+
+  disablePanel() {
+    const inputs = this.panel.querySelectorAll('input, select, button, .tab-btn');
+    inputs.forEach(input => {
+      input.disabled = true;
+    });
+    this.panel.style.opacity = '0.95';
+    this.panel.style.pointerEvents = 'none';
+    this.detectionParameters.sketch.cancel();
+  }
+
+  enablePanel() {
+    const inputs = this.panel.querySelectorAll('input, select, button, .tab-btn');
+    inputs.forEach(input => {
+      input.disabled = false;
+    });
+    this.panel.style.opacity = '1';
+    this.panel.style.pointerEvents = 'auto';
+  }
 }
 
 // Export the class

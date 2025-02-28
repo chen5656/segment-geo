@@ -247,10 +247,10 @@
       document.body.appendChild(toolButton);
 
       // Object Detection Panel
-      import('./components/ObjectDetectionPanel.js').then(module => {
-        const textDetectionLayer = getNewGraphicLayer('text detection input layer');
-        const pointsDetectionLayer = getNewGraphicLayer('point detection input layer');
-        let geojsonLayer = null;
+      import("./components/ObjectDetectionPanel.js").then(module => {
+        const textDetectionLayer = getNewGraphicLayer("text detection input layer", "hide");
+        const pointsDetectionLayer = getNewGraphicLayer("point detection input layer", "hide");
+        let geojsonLayers = [];
         const detectionParameters = {
           view: view,
           sketch: null,
@@ -258,32 +258,42 @@
           pointsDetectionLayer: pointsDetectionLayer,
         };
 
-        const objectDetectionPanel = new module.ObjectDetectionPanel(detectionParameters, displayGeojsonData, geojsonLayer);        
+        const objectDetectionPanel = new module.ObjectDetectionPanel(detectionParameters, displayPredictResult);        
 
-        function getNewGraphicLayer(title){
-          const lyr = new GraphicsLayer({ title: title });
+        function getNewGraphicLayer(title, listMode="show"){
+          const lyr = new GraphicsLayer({ 
+            title: title,
+            listMode: listMode
+           });
           map.add(lyr);
           return lyr;
         };
 
-        function displayGeojsonData(geoJson, displayParameters) {
+        function displayPredictResult(results, displayParameters) {
           detectionParameters.textDetectionLayer.removeAll();
-          detectionParameters.pointsDetectionLayer.removeAll();          
-          // Remove old layer if exists
-          if (geojsonLayer) {
-            map.remove(geojsonLayer);            
-          }
-          geojsonLayer = getGeojsonLayer(FeatureLayer, geoJson, displayParameters)        
-          // Add new layer to map
-          map.add(geojsonLayer);        
+          detectionParameters.pointsDetectionLayer.removeAll();    
+          // // Remove old layer if exists
+          // if (geojsonLayers.length > 0) {
+          //   map.removeMany(geojsonLayers);            
+          // }
+          geojsonLayers = results.map(result => {
+            const geoJsonData = result.geojson;
+            const title = result.prompt.value? `text_prompt_${result.prompt.value}` : "points_prompt_result";
+            return getGeojsonLayer(FeatureLayer, geoJsonData, displayParameters, title);
+          });
+
+          // Add new layers to map
+          map.addMany(geojsonLayers);     
           // Update the Editor widget's layers
-          editor.layerInfos = [{
-            layer: geojsonLayer,
-            enabled: true,
-            addEnabled: true,
-            updateEnabled: true,
-            deleteEnabled: true
-          }];
+          editor.layerInfos = geojsonLayers.map(lyr => {
+            return {
+              layer: lyr,
+              enabled: true,
+              addEnabled: true,
+              updateEnabled: true,
+              deleteEnabled: true
+            };
+          });
         }
 
         // Update tool button click handler
@@ -306,7 +316,7 @@
 
         // map clicked to update point list for points prompt.
         view.on("click", (event) => {
-          if (!objectDetectionPanel.panelVisible || !objectDetectionPanel.panel.querySelector('#points-tab').classList.contains('active')) {
+          if (!objectDetectionPanel.panelVisible || !objectDetectionPanel.panel.querySelector("#points-tab").classList.contains("active")) {
             return;
           }
           event.stopPropagation();
