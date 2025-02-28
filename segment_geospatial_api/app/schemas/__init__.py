@@ -1,2 +1,2 @@
 from .health import Health
-from .segmentation import SegmentationWithTextPromptRequest, SegmentationWithPointsRequest, SegmentationGeojsonResults, ErrorResponse
+from .predict import PredictionRequest, PredictionResults, ErrorResponse, PointPredictionRequest

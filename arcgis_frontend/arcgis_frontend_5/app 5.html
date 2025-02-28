@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Geocode Addresses by Map Extent</title>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.31/esri/themes/light/main.css">
+  <script src="https://js.arcgis.com/4.31/"></script>
+  <style>
+    html,
+    body,
+    #viewDiv {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    #geocodeButton {
+      position: absolute;
+      top: 10px;
+      left: 250px;
+      z-index: 99;
+      background-color: white;
+      padding: 10px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
+
+    #topPanel {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 99;
+      background-color: white;
+      padding: 10px 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'Arial', sans-serif;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    #jobIdDisplay {
+      margin-left: 3%;
+    }
+
+    .dropdown {
+      margin-right: 110px;
+      padding: 5px;
+      border-radius: 5px;
+      font-family: 'Arial', sans-serif;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .vexButton {
+      margin-left: 1500px;
+      padding: 5px;
+      border-radius: 5px;
+      font-family: 'Arial', sans-serif;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .vexcelMapContainer {
+      position: absolute;
+      top: 50px;
+      right: 20%;
+      bottom: 400px;
+      background-color: white;
+      display: block;
+    }
+
+    #vexcelMap {
+      position: absolute;
+      top: 150px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+
+    #vexcelMapContainer {
+      position: absolute;
+      top: 50px;
+      width: 500px;
+      height: 600px;
+      right: 20%;
+      border-color: #555;
+      border-width: 1cm;
+    }
+
+    #orientationButtons {
+      margin-top: 20px;
+      margin-left: 50px;
+      font-weight: bold;
+      font-size: 14;
+    }
+
+    #rightPanel {
+      position: fixed;
+      top: 65px;
+      right: 0;
+      width: 20%;
+      height: calc(100% - 50px);
+      background-color: white;
+      box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      font-family: 'Arial', sans-serif;
+    }
+
+    #editToolbar {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 99;
+      background-color: white;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+
+    #layerListDiv {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 99;
+      background-color: white;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+
+    #cognizantLogo {
+      height: 40px;
+      margin-left: 20px;
+      padding-right: 50px;
+    }
+  </style>
+  <link rel="stylesheet" href="https://app.vexcelgroup.com/map/latest/public/css/styles.css" type="text/css" />
+  <!-- <link rel="stylesheet" href="styles/ObjectDetectionPanel.css" type="text/css" /> -->
+  <script type="text/javascript" src="https://app.vexcelgroup.com/map/latest/public/Vexcel.js"></script>
+</head>
+
+<body>
+  <div id="topPanel">
+    <div id="jobIdDisplay"></div>
+    <select class="dropdown" id="3dSelect">
+      <option value="3D OFF">3D OFF</option>
+      <option value="3D ON">3D ON</option>
+    </select>
+    <img id="cognizantLogo" src="https://cognizant.scene7.com/is/content/cognizant/COG-Logo-2022-1?fmt=png-alpha"
+      alt="Cognizant Logo" />
+  </div>
+  <div id="viewDiv"></div>
+  <button id="geocodeButton">Geocode Extent</button>
+  <div class="vexcelMapContainer" id="vexcelMapContainer">
+    <div id="vexcelMap" class="vexcelMap"></div>
+    <div class="orientationButtons" style="margin-top: 20px;margin-left: 20px;font-weight: bold;font-size: 14">
+      <button id="closeBtn" style="margin-right:20px;">X</button>
+      <button id="verticalBtn">Vertical</button>
+      <button id="northBtn">North</button>
+      <button id="southBtn">South</button>
+      <button id="eastBtn">East</button>
+      <button id="westBtn">West</button>
+      <button id="dragBtn" style="margin-left:20px;">Drag</button>
+      <br><br>
+      <div class="col-md-3">
+        <button id="point">Point</button>
+        <button id="line">Line</button>
+        <button id="polygon">Polygon</button>
+        <button id="rectangle">Rectangle</button>
+        <button id="circle">Circle</button>
+      </div>
+    </div>
+  </div>
+  <div id="rightPanel"></div>  
+  <script src="./components/utils.js"></script>
+  <script type="module" src="./components/ObjectDetectionPanel.js"></script>
+  <script>
+    require([
+      "esri/config",
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/layers/FeatureLayer",
+      "esri/geometry/Extent",
+      "esri/core/urlUtils",
+      "esri/widgets/LayerList",
+      "esri/widgets/Editor",
+      "esri/layers/MapImageLayer",
+      "esri/geometry/support/webMercatorUtils",
+      "esri/widgets/Search",
+      "esri/Graphic",
+      "esri/geometry/projection",
+      "esri/layers/GraphicsLayer",
+      "esri/layers/ImageryLayer",
+      "esri/geometry/Point",
+      "esri/layers/TileLayer",
+      "esri/widgets/Sketch",
+      "esri/layers/GraphicsLayer",
+      "esri/Graphic"
+    ], function (esriConfig, Map, MapView, FeatureLayer, Extent, urlUtils, LayerList, Editor, MapImageLayer, webMercatorUtils, Search, Graphic, projection, GraphicsLayer, ImageryLayer, Point, TileLayer, Sketch, GraphicsLayer, Graphic) {
+      hideVexcelMap();
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const jobId = urlParams.get('jobId');
+      const token = sessionStorage.getItem("authToken");
+      const map = new Map({
+        basemap: "topo"
+      });
+      const view = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: [-104.993874, 39.754711],
+        zoom: 19
+      });
+      const searchWidget = new Search({
+        view: view
+      });
+      view.ui.add(searchWidget, {
+        position: "top-left"
+      });
+      const editor = new Editor({
+        view: view
+      });
+      view.ui.add(editor, {
+        position: "top-left"
+      });
+      const vexcel_1520 = new ImageryLayer({
+        url: 'https://gis.apfo.usda.gov/arcgis/rest/services/NAIP/USDA_CONUS_PRIME/ImageServer'
+      });
+      map.addMany([vexcel_1520]);
+      const graphicsLayer = new GraphicsLayer();
+      map.add(graphicsLayer);
+      const toolButton = document.createElement("button");
+      toolButton.id = "toolButton";
+      toolButton.textContent = "Activate Object Detection Tool";
+      toolButton.style.position = "absolute";
+      toolButton.style.top = "10px";
+      toolButton.style.left = "10px";
+      toolButton.style.zIndex = "99";
+      document.body.appendChild(toolButton);
+
+      // Object Detection Panel
+      import("./components/ObjectDetectionPanel.js").then(module => {
+        const textDetectionLayer = getNewGraphicLayer("text detection input layer", "hide");
+        const pointsDetectionLayer = getNewGraphicLayer("point detection input layer", "hide");
+        let geojsonLayers = [];
+        const detectionParameters = {
+          view: view,
+          sketch: null,
+          textDetectionLayer: textDetectionLayer,
+          pointsDetectionLayer: pointsDetectionLayer,
+        };
+
+        const objectDetectionPanel = new module.ObjectDetectionPanel(detectionParameters, displayPredictResult);        
+
+        function getNewGraphicLayer(title, listMode="show"){
+          const lyr = new GraphicsLayer({ 
+            title: title,
+            listMode: listMode
+           });
+          map.add(lyr);
+          return lyr;
+        };
+
+        function displayPredictResult(results, displayParameters) {
+          detectionParameters.textDetectionLayer.removeAll();
+          detectionParameters.pointsDetectionLayer.removeAll();    
+          // // Remove old layer if exists
+          // if (geojsonLayers.length > 0) {
+          //   map.removeMany(geojsonLayers);            
+          // }
+          geojsonLayers = results.map(result => {
+            const geoJsonData = result.geojson;
+            const title = result.prompt.value? `text_prompt_${result.prompt.value}` : "points_prompt_result";
+            return getGeojsonLayer(FeatureLayer, geoJsonData, displayParameters, title);
+          });
+
+          // Add new layers to map
+          map.addMany(geojsonLayers);     
+          // Update the Editor widget's layers
+          editor.layerInfos = geojsonLayers.map(lyr => {
+            return {
+              layer: lyr,
+              enabled: true,
+              addEnabled: true,
+              updateEnabled: true,
+              deleteEnabled: true
+            };
+          });
+        }
+
+        // Update tool button click handler
+        toolButton.addEventListener("click", () => {
+          let toolActive = (toolButton.textContent === "Activate Object Detection Tool");
+          toolButton.textContent = toolActive ? "Deactivate Tool" : "Activate Object Detection Tool";
+          if (toolActive) {
+            objectDetectionPanel.show();
+            detectionParameters.sketch = getNewSketch(Sketch, view, textDetectionLayer, detectionParameters);
+            
+
+          } else {
+            objectDetectionPanel.hide();
+            textDetectionLayer.removeAll();
+            detectionParameters.sketch.cancel();
+            view.ui.remove(sketch);
+            detectionParameters.geometry = null;
+          }
+        });
+
+        // map clicked to update point list for points prompt.
+        view.on("click", (event) => {
+          if (!objectDetectionPanel.panelVisible || !objectDetectionPanel.panel.querySelector("#points-tab").classList.contains("active")) {
+            return;
+          }
+          event.stopPropagation();
+          updatePoints(objectDetectionPanel.detectionParameters, objectDetectionPanel.pointsPromptParameters, view, event, Graphic);
+
+        });
+      });
+
+
+      const sectionsLayer = new FeatureLayer({
+        url: 'https://services3.arcgis.com/hm7m5CL2bomXg0YW/ArcGIS/rest/services/drone_poc_Arcgispro_WFL1/FeatureServer/6'
+      });
+      const parcelsLayer = new FeatureLayer({
+        url: 'https://services3.arcgis.com/hm7m5CL2bomXg0YW/ArcGIS/rest/services/drone_poc_Arcgispro_WFL1/FeatureServer/0'
+      });
+      const addressLayer = new TileLayer({
+        url: 'https://tiles.arcgis.com/tiles/hm7m5CL2bomXg0YW/arcgis/rest/services/Tile_Cache_CRH_1/MapServer/0'
+      });
+      const peLayer = new FeatureLayer({
+        url: 'https://services3.arcgis.com/hm7m5CL2bomXg0YW/ArcGIS/rest/services/drone_poc_Arcgispro_WFL1/FeatureServer/7'
+      });
+      const lineLayer = new FeatureLayer({
+        url: 'https://gisservices.its.ny.gov/arcgis/rest/services/NYS_Streets/MapServer/4'
+      });
+      const gicToken = 'e8823ec887551f759d7dbd14df3194333bbdedce22a4cb0315448aae1670f15717adf3947f1bd8a3e9d0abd5b14b0739165e8de570cdf0009b8fe983bd6b4653';
+      const core = new Vexcel.Map({
+        target: "vexcelMap",
+        token: gicToken,
+        init: {
+          layers: false,
+          callback: () => {
+            core.getLayerManager().getVexcelLayer(Vexcel.Constants.BuiltInLayers.BLUESKY).setVisible(true);
+          },
+        },
+      });
+
+      view.on("click", async (event) => {
+        var e = document.getElementById("3dSelect");
+        var value = e.options[e.selectedIndex].value;
+        if (value == "3D ON") {
+          const latitude = event.mapPoint.latitude;
+          const longitude = event.mapPoint.longitude;
+          const zoom = view.zoom;
+          core.setZoom(19);
+          core.setLocation(new Vexcel.Geometry.Location(latitude, longitude));
+          changeMode('3D');
+          showVexcelMap();
+          core.addEventListener(Vexcel.Events.MapEvents.START_MEASURE, (evt) => {
+            console.log(`MeasurementInfo Start: ${JSON.stringify(evt.measure.toGeoJSON())}`);
+          });
+          core.addEventListener(Vexcel.Events.MapEvents.FINISH_MEASURE, (evt) => {
+            console.log(`MeasurementInfo Finish: ${JSON.stringify(evt.measure.toGeoJSON())}`);
+          });
+          core.addEventListener(Vexcel.Events.MapEvents.CHANGE_MEASURE, (evt) => {
+            console.log(`MeasurementInfo Change: ${JSON.stringify(evt.measure.getMeasurementInfo())}`);
+          });
+          core.addEventListener(Vexcel.Events.MapEvents.STATUS_3D_MEASURES, (evt) => {
+            console.log(`3D Measure availability status:${evt.status} inside:${evt.inside}`);
+            if (evt.status === Vexcel.Constants.Status3D.STOP) {
+              document.getElementById("status-3d").className = "badge";
+              document.getElementById("status-3d").textContent = "NO DATA";
+            }
+            if (evt.status === Vexcel.Constants.Status3D.DOWNLOADING) {
+              document.getElementById("status-3d").className = "badge download";
+              document.getElementById("status-3d").textContent = "DOWNLOAD";
+            }
+            if (evt.status === Vexcel.Constants.Status3D.FINISHED && evt.inside) {
+              document.getElementById("status-3d").className = "badge available";
+              document.getElementById("status-3d").textContent = "AVAILABLE";
+            }
+            if (evt.status === Vexcel.Constants.Status3D.FINISHED && !evt.inside) {
+              document.getElementById("status-3d").className = "badge";
+              document.getElementById("status-3d").textContent = "NO DATA";
+            }
+          });
+        }
+      });
+      function changeMode(mode) {
+        core.changeMode(mode)
+          .then((response) => {
+            console.log(response.msg);
+            if (response.layer) {
+              console.log(`Change to mode ${mode} for layer ${response.layer.getName()}`);
+            }
+          })
+          .catch((error) => {
+            console.log(error);
+            alert(error);
+          });
+      }
+      function changeOrientation(orientation) {
+        core.changeOrientation(orientation)
+          .then((response) => {
+            console.log(response.msg);
+          })
+          .catch((error) => {
+            console.log(error);
+            alert(error);
+          });
+      }
+      map.addMany([sectionsLayer, parcelsLayer, addressLayer, peLayer, lineLayer]);
+      const layerList = new LayerList({
+        view: view
+      });
+      view.ui.add(layerList, {
+        position: "bottom-left"
+      });
+      function hideVexcelMap() {
+        var div = document.getElementById('vexcelMapContainer');
+        div.style.visibility = "hidden";
+      }
+      function showVexcelMap() {
+        var div = document.getElementById('vexcelMapContainer');
+        div.style.visibility = "visible";
+      }
+      document.getElementById('verticalBtn').onclick = function () { changeOrientation('V'); };
+      document.getElementById('northBtn').onclick = function () { changeOrientation('N'); };
+      document.getElementById('southBtn').onclick = function () { changeOrientation('S'); };
+      document.getElementById('eastBtn').onclick = function () { changeOrientation('E'); };
+      document.getElementById('westBtn').onclick = function () { changeOrientation('W'); };
+      document.getElementById('closeBtn').onclick = function () { hideVexcelMap(); };
+      document.getElementById("point").addEventListener("click", () => {
+        core.getMeasurementManager().activate(Vexcel.Constants.MeasurementTools.POINT);
+      });
+      document.getElementById("line").addEventListener("click", () => {
+        core.getMeasurementManager().activate(Vexcel.Constants.MeasurementTools.LINE);
+      });
+      document.getElementById("polygon").addEventListener("click", () => {
+        core.getMeasurementManager().activate(Vexcel.Constants.MeasurementTools.POLYGON);
+      });
+      document.getElementById("rectangle").addEventListener("click", () => {
+        core.getMeasurementManager().activate(Vexcel.Constants.MeasurementTools.RECTANGLE);
+      });
+      document.getElementById("circle").addEventListener("click", () => {
+        core.getMeasurementManager().activate(Vexcel.Constants.MeasurementTools.CIRCLE);
+      });
+      document.getElementById("dragBtn").addEventListener("click", () => {
+        core.getMeasurementManager().activate(Vexcel.Constants.MeasurementTools.DRAG);
+      });
+      function geocodeExtent(extent) {
+        const requestOptions = {
+          method: "GET",
+          redirect: "follow"
+        };
+        const center = webMercatorUtils.webMercatorToGeographic(extent.center);
+        console.log(center);
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${center.y},${center.x}&key=AIzaSyDhhixURX0PrrAsVzodk5q5QuiIhg7dwu0`;
+        fetch(url, requestOptions)
+          .then(response => response.json())
+          .then(result => {
+            if (result.status === "OK") {
+              result.results.forEach(location => {
+                var point = {
+                  type: "point",
+                  longitude: location.geometry.location.lng,
+                  latitude: location.geometry.location.lat
+                };
+                var markerSymbol = {
+                  type: "simple-marker",
+                  color: [226, 119, 40],
+                  outline: {
+                    color: [255, 255, 255],
+                    width: 2
+                  }
+                };
+                var pointGraphic = new Graphic({
+                  geometry: point,
+                  symbol: markerSymbol
+                });
+                graphicsLayer.add(pointGraphic);
+                console.log(point);
+                var textSymbol = {
+                  type: "text",
+                  color: "black",
+                  haloColor: "white",
+                  haloSize: "1px",
+                  text: location.formatted_address,
+                  xoffset: 0,
+                  yoffset: -20,
+                  font: {
+                    size: 12,
+                    family: "sans-serif"
+                  }
+                };
+                var textGraphic = new Graphic({
+                  geometry: point,
+                  symbol: textSymbol
+                });
+                graphicsLayer.add(textGraphic);
+              });
+            } else {
+              console.error("Geocode was not successful for the following reason: " + result.status);
+            }
+          })
+          .catch(error => console.error("Error:", error));
+      }
+      document.getElementById("geocodeButton").addEventListener("click", function () {
+        graphicsLayer.removeAll();
+        geocodeExtent(view.extent);
+      });
+    });
+  </script>  
+</body>
+
+</html>
