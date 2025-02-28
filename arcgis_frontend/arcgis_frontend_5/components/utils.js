@@ -208,7 +208,6 @@ function calculateCentroid(coordinates) {
 }
 
 function updatePoints(detectionParameters, pointsPromptParameters, view, event, Graphic){
-  debugger
   let {currentMode, deleteMode} = pointsPromptParameters;
 
   const pointsLayer = detectionParameters.pointsDetectionLayer

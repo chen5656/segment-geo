@@ -77,7 +77,23 @@ class TextPredictor:
             self._sam = None
             TextPredictor._initialized = False
 
- 
+    def _handle_error(self, prompt: PromptConfig, error_msg: str, results: list):
+        """Helper function to handle errors consistently.
+        
+        Args:
+            prompt (PromptConfig): The current prompt being processed
+            error_msg (str): Error message to log and return
+            results (list): List of results to append to
+        """
+        logger.error(error_msg)
+        prompt_json = prompt.model_dump()
+        prompt_json["type"] = "text"
+        results.append({
+            "prompt": prompt_json,
+            "error": error_msg
+        })
+        return True  # Indicates should break the loop
+
     async def make_predictions(
         self, 
         *, 
@@ -120,6 +136,8 @@ class TextPredictor:
         input_image = f"satellite_{request_id}.tif"
         output_image = f"segment_{request_id}.tif"
         output_geojson = f"segment_{request_id}.geojson"
+
+        results = []
         
         try:
             # Download satellite imagery
@@ -138,9 +156,6 @@ class TextPredictor:
             # Run prediction
             logger.info("Running SAM prediction...")
 
-            results_geojson = []
-            errors = []
-
             for prompt in text_prompts:
                 box_threshold = prompt.box_threshold
                 text_threshold = prompt.text_threshold
@@ -152,19 +167,17 @@ class TextPredictor:
                     return {"error": "Threshold values must be between 0 and 1"}
                 try:
                     logger.info(f"Running SAM prediction for {prompt_value}, box_threshold={box_threshold}, text_threshold={text_threshold}")
-                    # Run synchronous predict method in thread pool
                     self.sam.predict(
                         input_image, 
                         prompt_value, 
-                        box_threshold,  # Use input parameter
-                        text_threshold # Use input parameter
+                        box_threshold,
+                        text_threshold
                     )
                     logger.success(f"SAM prediction completed successfully")
 
                 except Exception as e:
-                    logger.error(f"Failed to run prediction for {prompt}: {str(e)}", exc_info=True)
-                    errors.append(f"Failed to run prediction for {prompt}: {str(e)}")
-                    break
+                    if self._handle_error(prompt, f"Failed to run prediction for {prompt}: {str(e)}", results):
+                        break
                 
                 # Generate visualization
                 logger.info("Generating visualization...")
@@ -179,9 +192,8 @@ class TextPredictor:
                     )
                     logger.success("Visualization generated successfully")
                 except Exception as e:
-                    logger.error(f"Failed to generate visualization: {str(e)}", exc_info=True)
-                    errors.append(f"Failed to generate visualization: {str(e)}")
-                    break
+                    if self._handle_error(prompt, f"Failed to generate visualization: {str(e)}", results):
+                        break
             
                 # Convert to GeoJSON
                 logger.info("Converting to GeoJSON...")
@@ -189,9 +201,9 @@ class TextPredictor:
                     raster_to_vector(output_image, output_geojson, None)
                     logger.success("Converted to GeoJSON successfully")
                 except Exception as e:
-                    logger.error(f"Failed to convert to GeoJSON. There may be no {prompt_value} in the specified area", exc_info=True)
-                    errors.append(f"Failed to convert to GeoJSON. There may be no {prompt_value} in the specified area")
-                    break
+                    error_msg = f"Failed to convert to GeoJSON. There may be no {prompt_value} in the specified area"
+                    if self._handle_error(prompt, error_msg, results):
+                        break
             
                 # Read GeoJSON content
                 logger.info("Reading GeoJSON content...")
@@ -200,9 +212,9 @@ class TextPredictor:
                         geojson_content = json.load(f)
                         
                     if not geojson_content.get('features'):
-                        logger.warning(f"No {prompt_value} found in the specified area")
-                        errors.append(f"No {prompt_value} found in the specified area")
-                        break
+                        error_msg = f"No {prompt_value} found in the specified area"
+                        if self._handle_error(prompt, error_msg, results):
+                            break
                     
                     # Transform coordinates to lat/long
                     logger.info("Transforming coordinates to WGS84...")
@@ -210,21 +222,23 @@ class TextPredictor:
                     geojson_count = len(transformed_geojson.get('features', []))
                     
                     logger.success(f"Successfully found {geojson_count} features")
-                    results_geojson.append(transformed_geojson)
+                    prompt_json = prompt.model_dump()
+                    prompt_json["type"] = "text"
+                    results.append({
+                        "prompt": prompt_json,
+                        "geojson": transformed_geojson
+                    })
                     
                 except Exception as e:
-                    logger.error(f"Failed to process GeoJSON output: {str(e)}", exc_info=True)
-                    errors.append(f"Failed to process GeoJSON output: {str(e)}")
-                    break
-            
-            return {
-                        "errors": errors,
-                        "version": "1.0",
-                        "predictions": "",
-                        "geojson": results_geojson
-                    }
+                    if self._handle_error(prompt, f"Failed to process GeoJSON output: {str(e)}", results):
+                        break
             
         finally:
+            # Return results
+            return {
+                "version": "1.0",
+                "json": results                        
+            }
             # Clean up temporary files
             logger.info("Cleaning up temporary files...")
             for file in [input_image, output_image, output_geojson]:

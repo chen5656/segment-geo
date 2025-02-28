@@ -19,7 +19,7 @@ def health() -> dict:
     health = schemas.Health(
         name=settings.PROJECT_NAME, api_version=__version__
     )
-    return health.dict()
+    return health.model_dump()
 
 @api_router.post("/predict", 
                 response_model=Union[schemas.PredictionResults, schemas.ErrorResponse], 
@@ -35,26 +35,12 @@ async def predict_text(request: schemas.PredictionRequest):
             text_prompts=request.text_prompts,
             zoom_level=request.zoom_level,
         )
-        if result.get("error") is not None:
-            logger.warning(f"Prediction validation error: {result.get('error')}")
-            error_content = result["error"]
-            # Handle both simple string errors and structured error objects
-            if isinstance(error_content, str):
-                return JSONResponse(
-                    status_code=400,
-                    content={"error": {"message": error_content}}
-                )
-            else:
-                return JSONResponse(
-                    status_code=400,
-                    content={"error": error_content}
-                )
 
-        logger.info(f"Prediction results: {result.get('predictions')}")
+        logger.info(f"Prediction finished successfully.")
         
         return JSONResponse(
             status_code=200,
-            content=result.get("geojson")
+            content=result.get("json")
         )
 
     except Exception as e:
@@ -82,10 +68,10 @@ async def predict_with_points(request: schemas.PointPredictionRequest):
                 content={"error": {"message": result["error"]}}
             )
 
-        logger.info(f"Point prediction results: {result.get('predictions')}")
+        logger.info(f"Point prediction finished successfully.")
         return JSONResponse(
             status_code=200,
-            content=result.get("geojson")
+            content=result.get("json")
         )
 
     except Exception as e:

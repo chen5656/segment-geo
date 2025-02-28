@@ -288,7 +288,7 @@ class ObjectDetectionPanel {
         points_exclude: this.pointsPromptParameters.excludePoints
       };
 
-      await this.sendPredictRequest(url, requestBody);
+      await this.sendPredictRequest(this.pointsPromptUrl, requestBody);
       
     } catch (error) {
       throw error;      

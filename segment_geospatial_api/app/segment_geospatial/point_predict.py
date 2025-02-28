@@ -103,14 +103,23 @@ class PointPredictor:
         input_image = f"satellite_{request_id}.tif"
         output_image = f"segment_{request_id}.tif"
         output_geojson = f"segment_{request_id}.geojson"
-
-
         
         all_points = points_include + (points_exclude or [])
         
         bounding_box = calculate_bounding_box(all_points, self.DEFAULT_BUFFER_SIZE)
+
+        results = []
+        prompt_json = None
                 
         try:
+            prompt_json = {
+                "points_include": points_include,
+                "points_exclude": points_exclude,
+                "box_threshold": box_threshold,
+                "zoom_level": zoom_level,
+                "type": "points"
+            }
+
             # Download satellite imagery
             logger.info("\n[Download] Downloading satellite imagery...")
             try:
@@ -155,23 +164,28 @@ class PointPredictor:
                 transformed_geojson = transform_coordinates(geojson_content)
                 geojson_count = len(transformed_geojson.get('features', []))
                 logger.info(f"[Process] Transformed {geojson_count} features to WGS84")
-                
-                return {
-                    "errors": None,
-                    "version": "1.0",
-                    "predictions": f"Successfully found {geojson_count} features",
+
+                results.append({
+                    "prompt": prompt_json,
                     "geojson": transformed_geojson
-                }
-                
+                })          
             except Exception as e:
                 logger.error(f"[Error] Failed to process GeoJSON: {str(e)}")
                 raise
             
         except Exception as e:
             logger.error(f"\n[Error] Exception occurred: {str(e)}")
-            return {"error": str(e)}
+            results.append({
+                "prompt": prompt_json,
+                "error": f"\n[Error] Exception occurred: {str(e)}"
+            })
             
         finally:
+            # Return results
+            return {
+                    "version": "1.0",
+                    "json": results                        
+            }    
             # Clean up temporary files
             logger.info("\n[Cleanup] Removing temporary files...")
             for file in [input_image, output_image, output_geojson]:
