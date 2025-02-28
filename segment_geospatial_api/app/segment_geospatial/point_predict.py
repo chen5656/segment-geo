@@ -181,11 +181,6 @@ class PointPredictor:
             })
             
         finally:
-            # Return results
-            return {
-                    "version": "1.0",
-                    "json": results                        
-            }    
             # Clean up temporary files
             logger.info("\n[Cleanup] Removing temporary files...")
             for file in [input_image, output_image, output_geojson]:
@@ -195,6 +190,11 @@ class PointPredictor:
                         logger.info(f"[Cleanup] Removed: {file}")
                     except Exception as e:
                         logger.error(f"[Cleanup] Failed to remove {file}: {str(e)}")
+            # Return results
+            return {
+                    "version": "1.0",
+                    "json": results                        
+            }    
 
 
 # Create singleton instance

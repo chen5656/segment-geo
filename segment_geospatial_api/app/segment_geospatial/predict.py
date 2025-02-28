@@ -234,11 +234,6 @@ class TextPredictor:
                         break
             
         finally:
-            # Return results
-            return {
-                "version": "1.0",
-                "json": results                        
-            }
             # Clean up temporary files
             logger.info("Cleaning up temporary files...")
             for file in [input_image, output_image, output_geojson]:
@@ -249,6 +244,11 @@ class TextPredictor:
                     except Exception as e:
                         logger.warning(f"Failed to remove temporary file {file}: {str(e)}")
 
+            # Return results
+            return {
+                "version": "1.0",
+                "json": results                        
+            }
 
 # Create singleton instance
 textPredictor = TextPredictor()

@@ -20,7 +20,7 @@ class Settings(BaseSettings):
 
     # Model Settings
     DEFAULT_TEXT_MODEL_TYPE: str = "sam2-hiera-large"
-    DEFAULT_POINT_MODEL_TYPE: str = "vit_b"  # Model type for point prediction. It can be one of vit_h, vit_l, vit_b
+    DEFAULT_POINT_MODEL_TYPE: str = "vit_h"  # Model type for point prediction. It can be one of vit_h, vit_l, vit_b
     MAX_TILES_LIMIT: int = 2000  # Maximum number of tiles allowed for processing
     MIN_ZOOM_LEVEL: int = 19  # Minimum zoom level allowed
     MAX_ZOOM_LEVEL: int = 22  # Maximum zoom level allowed
