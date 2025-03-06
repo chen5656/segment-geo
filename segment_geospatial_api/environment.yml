@@ -12,6 +12,7 @@ dependencies:
   - uvicorn
   - loguru
   - pytorch
+  - geoai
   - pip
   - pip:
     - python-multipart>=0.0.5

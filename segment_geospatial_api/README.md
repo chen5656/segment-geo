@@ -22,5 +22,10 @@ use GPU
 mamba install -c conda-forge segment-geospatial "pytorch=*=cuda*"
 ```
 
+use GeoAI
+```bash
+pip install "geoai-py[all]"
+```
+
 
 

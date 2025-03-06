@@ -8,6 +8,7 @@ dependencies:
   - python=3.11
   - gdal
   - samgeo
+  - geoai
   - pip
   - pip:
     - groundingdino-py
