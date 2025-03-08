@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from app.api import api_router
 from app.config import settings
 
@@ -12,11 +13,13 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+# Mount static files directory
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
 @app.get("/")
 async def root():
-    return RedirectResponse(url="/docs")
+    return FileResponse('app/static/index.html')
 
-# 配置 CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  

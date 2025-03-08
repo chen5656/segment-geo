@@ -117,4 +117,4 @@ venv.bak/
 *.tif
 *.log
 node_modules/
-.DS_Store
+*.DS_Store

@@ -1,0 +1,14 @@
+name: bing-building-api
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - flask
+  - geopandas
+  - shapely
+  - pandas
+  - mercantile
+  - pyyaml
+  - tqdm
+  - pip

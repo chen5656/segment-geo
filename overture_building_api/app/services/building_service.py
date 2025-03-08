@@ -1,5 +1,6 @@
 import os
 import time
+import json
 
 from geoai.download import download_overture_buildings, extract_building_stats
 
@@ -27,7 +28,7 @@ async def get_building_data(bbox: list) -> dict:
         stats = extract_building_stats(data_file)
 
         with open(data_file, 'r') as f:
-            geojson_data = f.read()
+            geojson_data = json.loads(f.read()) 
 
         if os.path.exists(temp_path):
             os.remove(temp_path)

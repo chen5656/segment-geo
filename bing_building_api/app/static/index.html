@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bing Buildings API Demo</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+        #map { height: 600px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bing Buildings API Demo</h1>
+        <div id="map"></div>
+        <div style="margin-top: 20px;">
+            <button onclick="queryBuildings()">Query Buildings</button>
+            <button onclick="downloadBuildings()">Download Buildings</button>
+        </div>
+    </div>
+
+    <script>
+        var map = L.map('map').setView([43.0566, -76.1577], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        
+        var drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+
+        function getBounds() {
+            var bounds = map.getBounds();
+            return [
+                bounds.getWest(),
+                bounds.getSouth(),
+                bounds.getEast(),
+                bounds.getNorth()
+            ];
+        }
+
+        function queryBuildings() {
+            fetch('/query/buildings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    bbox: getBounds()
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                drawnItems.clearLayers();
+                L.geoJSON(data).addTo(drawnItems);
+            });
+        }
+
+        function downloadBuildings() {
+            fetch('/download/buildings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    bbox: getBounds()
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Download completed: ' + JSON.stringify(data.downloaded));
+            });
+        }
+    </script>
+</body>
+</html>
