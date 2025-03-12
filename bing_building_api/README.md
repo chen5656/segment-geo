@@ -27,7 +27,8 @@ conda activate bing-building-api
 ## Usage
 1. Start the server:
 ```bash
-python -m app.api
+conda activate geo_new
+python -m app.main
 ```
 2. Access the demo interface:
 - Open http://localhost:5000 in your browser
