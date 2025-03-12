@@ -17,7 +17,7 @@ class BingBuildingDownloader:
         self.settings = settings
         self._df = None
         self.force_download = False
-        self.semaphore = asyncio.Semaphore(5)  # 限制并发数
+        self.semaphore = asyncio.Semaphore(5)  # limit to 5 concurrent downloads
         self._ensure_directories()
         self._df = None
         
