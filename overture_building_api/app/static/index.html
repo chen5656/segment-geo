@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Building Viewer</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+    <style>
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+        .control-panel {
+            margin: 20px;
+            padding: 10px;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="control-panel">
+        <h2>Building Viewer</h2>
+        <button onclick="getBuildingDataFromDraw()">Get Buildings in Drawn Area</button>
+        <button onclick="clearDrawings()">Clear All</button>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script>
+        let map = L.map('map').setView([37.7749, -122.4194], 13);
+        let drawnItems = new L.FeatureGroup().addTo(map);
+        let buildingLayer = L.geoJSON(null).addTo(map);
+        
+        // Base maps
+        let osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        });
+        
+        let satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Esri'
+        });
+        
+        let baseMaps = {
+            "OpenStreetMap": osm,
+            "Satellite": satellite
+        };
+        
+        let overlayMaps = {
+            "Buildings": buildingLayer,
+            "Drawn Items": drawnItems
+        };
+        
+        osm.addTo(map);
+        L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+        // Drawing controls
+        let drawControl = new L.Control.Draw({
+            draw: {
+                polygon: false,
+                circle: false,
+                circlemarker: false,
+                marker: false,
+                polyline: false,
+                rectangle: {
+                    shapeOptions: {
+                        color: 'red',
+                        weight: 2
+                    }
+                }
+            },
+            edit: {
+                featureGroup: drawnItems
+            }
+        });
+        map.addControl(drawControl);
+
+        let currentRectangle = null;
+
+        map.on('draw:created', function(e) {
+            if (currentRectangle) {
+                drawnItems.removeLayer(currentRectangle);
+            }
+            currentRectangle = e.layer;
+            drawnItems.addLayer(currentRectangle);
+        });
+
+        function getBuildingDataFromDraw() {
+            if (!currentRectangle) {
+                alert('Please draw a rectangle first!');
+                return;
+            }
+
+            const bounds = currentRectangle.getBounds();
+            const bbox = [
+                bounds.getWest(),
+                bounds.getSouth(),
+                bounds.getEast(),
+                bounds.getNorth()
+            ];
+
+            getBuildingData(bbox);
+        }
+
+        async function getBuildingData(bbox) {
+            try {
+                const response = await fetch('/buildings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ bbox: bbox })
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert('Error: ' + data.error.message);
+                    return;
+                }
+
+                buildingLayer.clearLayers();
+                buildingLayer.addData(data.geojson);
+
+            } catch (error) {
+                alert('Failed to fetch data: ' + error.message);
+            }
+        }
+
+        function clearDrawings() {
+            drawnItems.clearLayers();
+            buildingLayer.clearLayers();
+            currentRectangle = null;
+        }
+    </script>
+</body>
+</html>

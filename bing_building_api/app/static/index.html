@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Bing Buildings API Demo</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <style>
+        #map {
+            height: 600px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        button {
+            font-size: large;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Bing Buildings API Demo</h1>
+        <button onclick="prepareBuildingCache()">Prepare Bing Building Cache</button>
+        <button onclick="queryBuildings()">Query Buildings</button>
+        <div id="map"></div>
+        <div style="margin-top: 20px;">
+        </div>
+    </div>
+
+    <script>
+        var map = L.map('map').setView([43.0566, -76.1577], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        var drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+
+        var drawControl = new L.Control.Draw({
+            draw: {
+                polygon: false,
+                circle: false,
+                circlemarker: false,
+                marker: false,
+                polyline: false,
+                rectangle: true
+            },
+            edit: {
+                featureGroup: drawnItems
+            }
+        });
+        map.addControl(drawControl);
+    
+        map.on('draw:created', function (e) {
+            var layer = e.layer;
+            drawnItems.addLayer(layer);
+         });
+
+        function queryBuildingsWithGeometry(geometries) {
+            fetch('/query/buildings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    geometries: geometries
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                L.geoJSON(data).addTo(drawnItems);
+            });
+        }
+    
+        function queryBuildings() {
+            if(drawnItems.getLayers().length === 0) {
+                alert("Please draw at least one rectangle first");
+                return;
+            }
+            if(confirm("Query drawed polygons?")){
+                var features = [];
+                drawnItems.eachLayer(function(layer) {
+                    var bounds = layer.getBounds();
+                    features.push(getBoundsGeometry(bounds));
+                });
+                queryBuildingsWithGeometry(features);
+            }else{
+                alert("User canceled");
+            }
+        }
+        
+        function getBoundsGeometry(bounds) {
+            var nw = bounds.getNorthWest();
+            var ne = bounds.getNorthEast();
+            var se = bounds.getSouthEast();
+            var sw = bounds.getSouthWest();
+
+            //return pure geometry
+            return {
+                    type: "Polygon",
+                    coordinates: [[
+                        [sw.lng, sw.lat],
+                        [nw.lng, nw.lat],
+                        [ne.lng, ne.lat],
+                        [se.lng, se.lat],
+                        [sw.lng, sw.lat]
+                    ]]
+            };
+        }
+
+        function prepareBuildingCache() {
+            if (confirm("This function will download the Bing buildings for the current map view to the server if our server does not have it already. Do you want to continue?")) {
+                downloadBuildings();
+            }
+        }
+
+        function downloadBuildings() {
+            const geometry = getBoundsGeometry(map.getBounds());
+            fetch('/download/buildings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    geometries: [geometry]
+                })
+            })
+                .then(response => {
+                    return response.json()
+                })
+                .then(data => {
+                    alert('Download completed: ' + JSON.stringify(data.downloaded));
+                });
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,5 @@
+bing_buildings:
+  data_dir: "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/data/bing_buildings"
+  index_file: "index.json"
+  cache_dir: "cache"
+  zoom_level: 9

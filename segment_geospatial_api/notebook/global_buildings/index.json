@@ -1,0 +1,2385 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -76.64227031696171,
+              42.554023735949045
+            ],
+            [
+              -75.93864827273202,
+              42.554023735949045
+            ],
+            [
+              -75.93864827273202,
+              43.07209963679704
+            ],
+            [
+              -76.64227031696171,
+              43.07209963679704
+            ],
+            [
+              -76.64227031696171,
+              42.554023735949045
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232211",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232211_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -76.64214477986138,
+              41.5095315971909
+            ],
+            [
+              -75.93877224117557,
+              41.5095315971909
+            ],
+            [
+              -75.93877224117557,
+              42.034178
+            ],
+            [
+              -76.64214477986138,
+              42.034178
+            ],
+            [
+              -76.64214477986138,
+              41.5095315971909
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232231",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232231_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.45464443868863,
+              40.4479026622364
+            ],
+            [
+              -78.75112604094025,
+              40.4479026622364
+            ],
+            [
+              -78.75112604094025,
+              40.9810265939808
+            ],
+            [
+              -79.45464443868863,
+              40.9810265939808
+            ],
+            [
+              -79.45464443868863,
+              40.4479026622364
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "032001111",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/032001111_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -73.82970098826499,
+              42.033871532475956
+            ],
+            [
+              -73.12625298707164,
+              42.033871532475956
+            ],
+            [
+              -73.12625298707164,
+              42.5542463960266
+            ],
+            [
+              -73.82970098826499,
+              42.5542463960266
+            ],
+            [
+              -73.82970098826499,
+              42.033871532475956
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232313",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232313_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -75.235853,
+              40.98069885286698
+            ],
+            [
+              -74.5325088412854,
+              40.98069885286698
+            ],
+            [
+              -74.5325088412854,
+              41.50963899459247
+            ],
+            [
+              -75.235853,
+              41.50963899459247
+            ],
+            [
+              -75.235853,
+              40.98069885286698
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232323",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232323_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -77.34524107423452,
+              42.55404692136034
+            ],
+            [
+              -76.641903,
+              42.55404692136034
+            ],
+            [
+              -76.641903,
+              43.07030656148337
+            ],
+            [
+              -77.34524107423452,
+              43.07030656148337
+            ],
+            [
+              -77.34524107423452,
+              42.55404692136034
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232210",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232210_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.04837417819722,
+              39.91044438758581
+            ],
+            [
+              -77.3446925432606,
+              39.91044438758581
+            ],
+            [
+              -77.3446925432606,
+              40.44811190336097
+            ],
+            [
+              -78.04837417819722,
+              40.44811190336097
+            ],
+            [
+              -78.04837417819722,
+              39.91044438758581
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "032010003",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/032010003_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -73.82968352990365,
+              41.50952572533751
+            ],
+            [
+              -73.12602205524078,
+              41.50952572533751
+            ],
+            [
+              -73.12602205524078,
+              42.034111797402836
+            ],
+            [
+              -73.82968352990365,
+              42.034111797402836
+            ],
+            [
+              -73.82968352990365,
+              41.50952572533751
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232331",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232331_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -73.83022995345138,
+              42.5539978587859
+            ],
+            [
+              -73.12622270194984,
+              42.5539978587859
+            ],
+            [
+              -73.12622270194984,
+              43.07001884553577
+            ],
+            [
+              -73.83022995345138,
+              43.07001884553577
+            ],
+            [
+              -73.83022995345138,
+              42.5539978587859
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232311",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232311_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.75127198934533,
+              41.50938526535468
+            ],
+            [
+              -78.04818636621917,
+              41.50938526535468
+            ],
+            [
+              -78.04818636621917,
+              42.034026974865085
+            ],
+            [
+              -78.75127198934533,
+              42.034026974865085
+            ],
+            [
+              -78.75127198934533,
+              41.50938526535468
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232220",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232220_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -73.12645843310017,
+              42.55404290573989
+            ],
+            [
+              -72.42308369956874,
+              42.55404290573989
+            ],
+            [
+              -72.42308369956874,
+              43.070002
+            ],
+            [
+              -73.12645843310017,
+              43.070002
+            ],
+            [
+              -73.12645843310017,
+              42.55404290573989
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030233200",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030233200_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.7515496332815,
+              40.980852878232405
+            ],
+            [
+              -78.0483219184956,
+              40.980852878232405
+            ],
+            [
+              -78.0483219184956,
+              41.5099566407417
+            ],
+            [
+              -78.7515496332815,
+              41.5099566407417
+            ],
+            [
+              -78.7515496332815,
+              40.980852878232405
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232222",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232222_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.454642,
+              40.980851979645365
+            ],
+            [
+              -78.75114521089806,
+              40.980851979645365
+            ],
+            [
+              -78.75114521089806,
+              41.509619753023394
+            ],
+            [
+              -79.454642,
+              41.509619753023394
+            ],
+            [
+              -79.454642,
+              40.980851979645365
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030223333",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030223333_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -72.42342434838788,
+              42.03390578143194
+            ],
+            [
+              -71.71995478142573,
+              42.03390578143194
+            ],
+            [
+              -71.71995478142573,
+              42.55455195153188
+            ],
+            [
+              -72.42342434838788,
+              42.55455195153188
+            ],
+            [
+              -72.42342434838788,
+              42.03390578143194
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030233203",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030233203_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -75.9390213029433,
+              41.50936417862571
+            ],
+            [
+              -75.23534607726708,
+              41.50936417862571
+            ],
+            [
+              -75.23534607726708,
+              42.03403718474348
+            ],
+            [
+              -75.9390213029433,
+              42.03403718474348
+            ],
+            [
+              -75.9390213029433,
+              41.50936417862571
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232320",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232320_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -73.1273209994173,
+              40.65134882099981
+            ],
+            [
+              -72.42313435700768,
+              40.65134882099981
+            ],
+            [
+              -72.42313435700768,
+              40.98107403842391
+            ],
+            [
+              -73.1273209994173,
+              40.98107403842391
+            ],
+            [
+              -73.1273209994173,
+              40.65134882099981
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "032011000",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/032011000_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.75230966144589,
+              43.06978908193062
+            ],
+            [
+              -78.04785338997607,
+              43.06978908193062
+            ],
+            [
+              -78.04785338997607,
+              43.37613812763181
+            ],
+            [
+              -78.75230966144589,
+              43.37613812763181
+            ],
+            [
+              -78.75230966144589,
+              43.06978908193062
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232022",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232022_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -73.8296566418223,
+              43.06968229811173
+            ],
+            [
+              -73.12626891406777,
+              43.06968229811173
+            ],
+            [
+              -73.12626891406777,
+              43.5814530127863
+            ],
+            [
+              -73.8296566418223,
+              43.5814530127863
+            ],
+            [
+              -73.8296566418223,
+              43.06968229811173
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232133",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232133_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -73.12703252498038,
+              40.98084750546586
+            ],
+            [
+              -72.42310975074847,
+              40.98084750546586
+            ],
+            [
+              -72.42310975074847,
+              41.51014677885617
+            ],
+            [
+              -73.12703252498038,
+              41.51014677885617
+            ],
+            [
+              -73.12703252498038,
+              40.98084750546586
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030233222",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030233222_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.04829996365255,
+              41.50955994228301
+            ],
+            [
+              -77.34506061421304,
+              41.50955994228301
+            ],
+            [
+              -77.34506061421304,
+              42.0338659853426
+            ],
+            [
+              -78.04829996365255,
+              42.0338659853426
+            ],
+            [
+              -78.04829996365255,
+              41.50955994228301
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232221",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232221_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -74.53268551672772,
+              41.50939741832371
+            ],
+            [
+              -73.8293282971259,
+              41.50939741832371
+            ],
+            [
+              -73.8293282971259,
+              42.03406898133037
+            ],
+            [
+              -74.53268551672772,
+              42.03406898133037
+            ],
+            [
+              -74.53268551672772,
+              41.50939741832371
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232330",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232330_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -75.93896788931652,
+              43.06901925361947
+            ],
+            [
+              -75.23543570710679,
+              43.06901925361947
+            ],
+            [
+              -75.23543570710679,
+              43.581449120378394
+            ],
+            [
+              -75.93896788931652,
+              43.581449120378394
+            ],
+            [
+              -75.93896788931652,
+              43.06901925361947
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232122",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232122_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -75.236564,
+              40.44782687656371
+            ],
+            [
+              -74.53232974355329,
+              40.44782687656371
+            ],
+            [
+              -74.53232974355329,
+              40.981168430881276
+            ],
+            [
+              -75.236564,
+              40.981168430881276
+            ],
+            [
+              -75.236564,
+              40.44782687656371
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "032010101",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/032010101_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -75.236057,
+              43.069798
+            ],
+            [
+              -74.532664,
+              43.069798
+            ],
+            [
+              -74.532664,
+              43.578644
+            ],
+            [
+              -75.236057,
+              43.578644
+            ],
+            [
+              -75.236057,
+              43.069798
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232123",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232123_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -75.23722058097444,
+              39.90991476892149
+            ],
+            [
+              -74.5323331199272,
+              39.90991476892149
+            ],
+            [
+              -74.5323331199272,
+              40.448175539459434
+            ],
+            [
+              -75.23722058097444,
+              40.448175539459434
+            ],
+            [
+              -75.23722058097444,
+              39.90991476892149
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "032010103",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/032010103_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.04829675785972,
+              42.033969574975714
+            ],
+            [
+              -77.34502218241563,
+              42.033969574975714
+            ],
+            [
+              -77.34502218241563,
+              42.55418083926043
+            ],
+            [
+              -78.04829675785972,
+              42.55418083926043
+            ],
+            [
+              -78.04829675785972,
+              42.033969574975714
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232203",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232203_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.45463861138981,
+              42.03395523594074
+            ],
+            [
+              -78.75115486527471,
+              42.03395523594074
+            ],
+            [
+              -78.75115486527471,
+              42.554295109522876
+            ],
+            [
+              -79.45463861138981,
+              42.554295109522876
+            ],
+            [
+              -79.45463861138981,
+              42.03395523594074
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030223313",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030223313_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.0484039185073,
+              42.553376
+            ],
+            [
+              -77.3448447843002,
+              42.553376
+            ],
+            [
+              -77.3448447843002,
+              43.070394408286425
+            ],
+            [
+              -78.0484039185073,
+              43.070394408286425
+            ],
+            [
+              -78.0484039185073,
+              42.553376
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232201",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232201_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -72.42333123306129,
+              42.55299761214675
+            ],
+            [
+              -71.71901722635347,
+              42.55299761214675
+            ],
+            [
+              -71.71901722635347,
+              43.069995562314496
+            ],
+            [
+              -72.42333123306129,
+              43.069995562314496
+            ],
+            [
+              -72.42333123306129,
+              42.55299761214675
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030233201",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030233201_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -75.93916484608685,
+              42.0339253927725
+            ],
+            [
+              -75.23560078879946,
+              42.0339253927725
+            ],
+            [
+              -75.23560078879946,
+              42.55416426374675
+            ],
+            [
+              -75.93916484608685,
+              42.55416426374675
+            ],
+            [
+              -75.93916484608685,
+              42.0339253927725
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232302",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232302_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.45464684078279,
+              39.91074435551628
+            ],
+            [
+              -78.75124629498336,
+              39.91074435551628
+            ],
+            [
+              -78.75124629498336,
+              40.44834980147177
+            ],
+            [
+              -79.45464684078279,
+              40.44834980147177
+            ],
+            [
+              -79.45464684078279,
+              39.91074435551628
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "032001113",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/032001113_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -73.82972222461395,
+              40.98055255215107
+            ],
+            [
+              -73.12611896817015,
+              40.98055255215107
+            ],
+            [
+              -73.12611896817015,
+              41.50973273886364
+            ],
+            [
+              -73.82972222461395,
+              41.50973273886364
+            ],
+            [
+              -73.82972222461395,
+              40.98055255215107
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232333",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232333_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -77.34529407556256,
+              43.069792433759865
+            ],
+            [
+              -76.64188028034417,
+              43.069792433759865
+            ],
+            [
+              -76.64188028034417,
+              43.400194
+            ],
+            [
+              -77.34529407556256,
+              43.400194
+            ],
+            [
+              -77.34529407556256,
+              43.069792433759865
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232032",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232032_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -76.64207788277139,
+              42.03391261827169
+            ],
+            [
+              -75.93851414610525,
+              42.03391261827169
+            ],
+            [
+              -75.93851414610525,
+              42.55415527288909
+            ],
+            [
+              -76.64207788277139,
+              42.55415527288909
+            ],
+            [
+              -76.64207788277139,
+              42.03391261827169
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232213",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232213_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -75.93943845363647,
+              40.98085294402997
+            ],
+            [
+              -75.23546931505152,
+              40.98085294402997
+            ],
+            [
+              -75.23546931505152,
+              41.50981413048029
+            ],
+            [
+              -75.93943845363647,
+              41.50981413048029
+            ],
+            [
+              -75.93943845363647,
+              40.98085294402997
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232322",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232322_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -74.53281464249427,
+              40.98028071936875
+            ],
+            [
+              -73.82928445594503,
+              40.98028071936875
+            ],
+            [
+              -73.82928445594503,
+              41.51045031798211
+            ],
+            [
+              -74.53281464249427,
+              41.51045031798211
+            ],
+            [
+              -74.53281464249427,
+              40.98028071936875
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232332",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232332_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -72.42345490786164,
+              40.858904593706434
+            ],
+            [
+              -72.09039463698629,
+              40.858904593706434
+            ],
+            [
+              -72.09039463698629,
+              40.98106559507753
+            ],
+            [
+              -72.42345490786164,
+              40.98106559507753
+            ],
+            [
+              -72.42345490786164,
+              40.858904593706434
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "032011001",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/032011001_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -74.5327522915931,
+              42.554012
+            ],
+            [
+              -73.82800448375004,
+              42.554012
+            ],
+            [
+              -73.82800448375004,
+              43.06998824231559
+            ],
+            [
+              -74.5327522915931,
+              43.06998824231559
+            ],
+            [
+              -74.5327522915931,
+              42.554012
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232310",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232310_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -77.34620274684025,
+              39.91059999812998
+            ],
+            [
+              -76.64039568703032,
+              39.91059999812998
+            ],
+            [
+              -76.64039568703032,
+              40.44808454285104
+            ],
+            [
+              -77.34620274684025,
+              40.44808454285104
+            ],
+            [
+              -77.34620274684025,
+              39.91059999812998
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "032010012",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/032010012_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.7514921201151,
+              42.03297617011196
+            ],
+            [
+              -78.04818830989937,
+              42.03297617011196
+            ],
+            [
+              -78.04818830989937,
+              42.554152475656856
+            ],
+            [
+              -78.7514921201151,
+              42.554152475656856
+            ],
+            [
+              -78.7514921201151,
+              42.03297617011196
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232202",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232202_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.04857684263614,
+              40.44791629662822
+            ],
+            [
+              -77.34498474624849,
+              40.44791629662822
+            ],
+            [
+              -77.34498474624849,
+              40.981078594234376
+            ],
+            [
+              -78.04857684263614,
+              40.981078594234376
+            ],
+            [
+              -78.04857684263614,
+              40.44791629662822
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "032010001",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/032010001_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -75.23584653944823,
+              42.03395742888323
+            ],
+            [
+              -74.53231566281939,
+              42.03395742888323
+            ],
+            [
+              -74.53231566281939,
+              42.5541440426534
+            ],
+            [
+              -75.23584653944823,
+              42.5541440426534
+            ],
+            [
+              -75.23584653944823,
+              42.03395742888323
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232303",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232303_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -77.34528259844416,
+              41.5096537183172
+            ],
+            [
+              -76.64190713615177,
+              41.5096537183172
+            ],
+            [
+              -76.64190713615177,
+              42.034065
+            ],
+            [
+              -77.34528259844416,
+              42.034065
+            ],
+            [
+              -77.34528259844416,
+              41.5096537183172
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232230",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232230_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -75.23641588613263,
+              42.55404642033188
+            ],
+            [
+              -74.53235100181318,
+              42.55404642033188
+            ],
+            [
+              -74.53235100181318,
+              43.07001094005345
+            ],
+            [
+              -75.23641588613263,
+              43.07001094005345
+            ],
+            [
+              -75.23641588613263,
+              42.55404642033188
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232301",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232301_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -73.12656497330306,
+              41.5091882020691
+            ],
+            [
+              -72.42314232719316,
+              41.5091882020691
+            ],
+            [
+              -72.42314232719316,
+              42.03410422831886
+            ],
+            [
+              -73.12656497330306,
+              42.03410422831886
+            ],
+            [
+              -73.12656497330306,
+              41.5091882020691
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030233220",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030233220_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.04814130821875,
+              40.9808466700818
+            ],
+            [
+              -77.34503233133691,
+              40.9808466700818
+            ],
+            [
+              -77.34503233133691,
+              41.50963778955155
+            ],
+            [
+              -78.04814130821875,
+              41.50963778955155
+            ],
+            [
+              -78.04814130821875,
+              40.9808466700818
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232223",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232223_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -75.93963884186813,
+              39.90999609838436
+            ],
+            [
+              -75.2346596490857,
+              39.90999609838436
+            ],
+            [
+              -75.2346596490857,
+              40.44813491378738
+            ],
+            [
+              -75.93963884186813,
+              40.44813491378738
+            ],
+            [
+              -75.93963884186813,
+              39.90999609838436
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "032010102",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/032010102_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -79.454507,
+              41.50962367839338
+            ],
+            [
+              -78.75138867913397,
+              41.50962367839338
+            ],
+            [
+              -78.75138867913397,
+              42.03396790066108
+            ],
+            [
+              -79.454507,
+              42.03396790066108
+            ],
+            [
+              -79.454507,
+              41.50962367839338
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030223331",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030223331_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -75.93899088060394,
+              40.447826030986256
+            ],
+            [
+              -75.23487056531525,
+              40.447826030986256
+            ],
+            [
+              -75.23487056531525,
+              40.981036
+            ],
+            [
+              -75.93899088060394,
+              40.981036
+            ],
+            [
+              -75.93899088060394,
+              40.447826030986256
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "032010100",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/032010100_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -75.93895213637225,
+              42.55400609535663
+            ],
+            [
+              -75.234837,
+              42.55400609535663
+            ],
+            [
+              -75.234837,
+              43.07007890466119
+            ],
+            [
+              -75.93895213637225,
+              43.07007890466119
+            ],
+            [
+              -75.93895213637225,
+              42.55400609535663
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232300",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232300_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -74.53275812305968,
+              42.03377114703255
+            ],
+            [
+              -73.82938467466927,
+              42.03377114703255
+            ],
+            [
+              -73.82938467466927,
+              42.554139
+            ],
+            [
+              -74.53275812305968,
+              42.554139
+            ],
+            [
+              -74.53275812305968,
+              42.03377114703255
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232312",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232312_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -73.12644129767652,
+              42.03387665629743
+            ],
+            [
+              -72.42316008707347,
+              42.03387665629743
+            ],
+            [
+              -72.42316008707347,
+              42.55411387066869
+            ],
+            [
+              -73.12644129767652,
+              42.55411387066869
+            ],
+            [
+              -73.12644129767652,
+              42.03387665629743
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030233202",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030233202_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -77.34521278740566,
+              40.44789729947264
+            ],
+            [
+              -76.641812,
+              40.44789729947264
+            ],
+            [
+              -76.641812,
+              40.98095139852487
+            ],
+            [
+              -77.34521278740566,
+              40.98095139852487
+            ],
+            [
+              -77.34521278740566,
+              40.44789729947264
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "032010010",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/032010010_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -73.12649519821937,
+              43.069819037691445
+            ],
+            [
+              -72.4230065533913,
+              43.069819037691445
+            ],
+            [
+              -72.4230065533913,
+              43.58283575996889
+            ],
+            [
+              -73.12649519821937,
+              43.58283575996889
+            ],
+            [
+              -73.12649519821937,
+              43.069819037691445
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030233022",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030233022_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.75170046226596,
+              39.910704774005865
+            ],
+            [
+              -78.0481695249346,
+              39.910704774005865
+            ],
+            [
+              -78.0481695249346,
+              40.44817015042601
+            ],
+            [
+              -78.75170046226596,
+              40.44817015042601
+            ],
+            [
+              -78.75170046226596,
+              39.910704774005865
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "032010002",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/032010002_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -77.34517983045141,
+              40.98086041031189
+            ],
+            [
+              -76.6413764814118,
+              40.98086041031189
+            ],
+            [
+              -76.6413764814118,
+              41.50965521536691
+            ],
+            [
+              -77.34517983045141,
+              41.50965521536691
+            ],
+            [
+              -77.34517983045141,
+              40.98086041031189
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232232",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232232_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -74.532644,
+              43.06971
+            ],
+            [
+              -73.82935493393502,
+              43.06971
+            ],
+            [
+              -73.82935493393502,
+              43.581425
+            ],
+            [
+              -74.532644,
+              43.581425
+            ],
+            [
+              -74.532644,
+              43.06971
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232132",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232132_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -77.34531750681477,
+              42.033859246804035
+            ],
+            [
+              -76.641875,
+              42.033859246804035
+            ],
+            [
+              -76.641875,
+              42.5541671215368
+            ],
+            [
+              -77.34531750681477,
+              42.5541671215368
+            ],
+            [
+              -77.34531750681477,
+              42.033859246804035
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232212",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232212_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -75.235807,
+              41.50943901647406
+            ],
+            [
+              -74.53244716715379,
+              41.50943901647406
+            ],
+            [
+              -74.53244716715379,
+              42.03409502520995
+            ],
+            [
+              -75.235807,
+              42.03409502520995
+            ],
+            [
+              -75.235807,
+              41.50943901647406
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232321",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232321_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -73.83045370193932,
+              40.58014521933396
+            ],
+            [
+              -73.12508348430829,
+              40.58014521933396
+            ],
+            [
+              -73.12508348430829,
+              40.9811016962109
+            ],
+            [
+              -73.83045370193932,
+              40.9811016962109
+            ],
+            [
+              -73.83045370193932,
+              40.58014521933396
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "032010111",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/032010111_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -72.42337426910493,
+              41.50871026452603
+            ],
+            [
+              -71.719967,
+              41.50871026452603
+            ],
+            [
+              -71.719967,
+              42.03411880661053
+            ],
+            [
+              -72.42337426910493,
+              42.03411880661053
+            ],
+            [
+              -72.42337426910493,
+              41.50871026452603
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030233221",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030233221_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.04842250754922,
+              43.069768056237876
+            ],
+            [
+              -77.34500670828241,
+              43.069768056237876
+            ],
+            [
+              -77.34500670828241,
+              43.37058805958314
+            ],
+            [
+              -78.04842250754922,
+              43.37058805958314
+            ],
+            [
+              -78.04842250754922,
+              43.069768056237876
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232023",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232023_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.7528930562353,
+              42.55402677995161
+            ],
+            [
+              -78.04808766163033,
+              42.55402677995161
+            ],
+            [
+              -78.04808766163033,
+              43.07003065090378
+            ],
+            [
+              -78.7528930562353,
+              43.07003065090378
+            ],
+            [
+              -78.7528930562353,
+              42.55402677995161
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232200",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232200_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -76.6420885292596,
+              43.06932451828763
+            ],
+            [
+              -75.93870387790425,
+              43.06932451828763
+            ],
+            [
+              -75.93870387790425,
+              43.581362
+            ],
+            [
+              -76.6420885292596,
+              43.581362
+            ],
+            [
+              -76.6420885292596,
+              43.06932451828763
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232033",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232033_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -76.642884,
+              39.91059092415971
+            ],
+            [
+              -75.93843633547267,
+              39.91059092415971
+            ],
+            [
+              -75.93843633547267,
+              40.44840897485731
+            ],
+            [
+              -76.642884,
+              40.44840897485731
+            ],
+            [
+              -76.642884,
+              39.91059092415971
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "032010013",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/032010013_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -72.42351227956947,
+              40.98084654417559
+            ],
+            [
+              -71.71980337192218,
+              40.98084654417559
+            ],
+            [
+              -71.71980337192218,
+              41.509796516799284
+            ],
+            [
+              -72.42351227956947,
+              41.509796516799284
+            ],
+            [
+              -72.42351227956947,
+              40.98084654417559
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030233223",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030233223_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -76.64226960334858,
+              40.98082021568431
+            ],
+            [
+              -75.93694935777428,
+              40.98082021568431
+            ],
+            [
+              -75.93694935777428,
+              41.50974190158414
+            ],
+            [
+              -76.64226960334858,
+              41.50974190158414
+            ],
+            [
+              -76.64226960334858,
+              40.98082021568431
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030232233",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030232233_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.75187763570166,
+              40.447886589767776
+            ],
+            [
+              -78.04814311779316,
+              40.447886589767776
+            ],
+            [
+              -78.04814311779316,
+              40.981425174457016
+            ],
+            [
+              -78.75187763570166,
+              40.981425174457016
+            ],
+            [
+              -78.75187763570166,
+              40.447886589767776
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "032010000",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/032010000_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -76.6424740496757,
+              40.447358
+            ],
+            [
+              -75.93873650147383,
+              40.447358
+            ],
+            [
+              -75.93873650147383,
+              40.98105567469163
+            ],
+            [
+              -76.6424740496757,
+              40.98105567469163
+            ],
+            [
+              -76.6424740496757,
+              40.447358
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "032010011",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/032010011_processed.json"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -72.42384746543613,
+              43.069847
+            ],
+            [
+              -71.71985894378152,
+              43.069847
+            ],
+            [
+              -71.71985894378152,
+              43.58146778891128
+            ],
+            [
+              -72.42384746543613,
+              43.58146778891128
+            ],
+            [
+              -72.42384746543613,
+              43.069847
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "quad_key": "030233023",
+        "file_path": "/Users/huajunchen/Library/Project/Python/segment-geo/segment_geospatial_api/notebook/global_buildings/030233023_processed.json"
+      }
+    }
+  ]
+}
