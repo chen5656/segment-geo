@@ -4,6 +4,7 @@ from fastapi.responses import RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from app.api import api_router
 from app.config import settings
+from loguru import logger
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -23,6 +24,10 @@ app.add_middleware(
 
 app.include_router(api_router)
 
+
 if __name__ == "__main__":
+    # Use this for debugging purposes only
+    logger.warning("Running in development mode. Do not run like this in production.")
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+    uvicorn.run(app, host="localhost", port=8001, log_level="debug")

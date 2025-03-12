@@ -21,3 +21,21 @@ class DownloadResponse(BaseModel):
     downloaded: List[str]
 
 
+class GeometryInput(BaseModel):
+    """GeoJSON geometry schema"""
+    type: str = Field(..., description="GeoJSON geometry type", 
+                     pattern="^(Point|MultiPoint|LineString|MultiLineString|Polygon|MultiPolygon)$")
+    coordinates: List[Any] = Field(..., description="GeoJSON coordinates array")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "type": "Polygon",
+                "coordinates": [[[30.0, 10.0], [40.0, 40.0], [20.0, 40.0], [10.0, 20.0], [30.0, 10.0]]]
+            }
+        }
+
+class BatchGeometryRequest(BaseModel):
+    geometries: List[GeometryInput]
+
+

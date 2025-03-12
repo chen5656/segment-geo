@@ -1,39 +1,61 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Bing Buildings API Demo</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <style>
-        #map { height: 600px; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        #map {
+            height: 600px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        button {
+            font-size: large;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>Bing Buildings API Demo</h1>
+        <button onclick="prepareBuildingCache()">Prepare Bing Building Cache</button>
+        <button onclick="queryBuildings()">Query Buildings</button>
         <div id="map"></div>
         <div style="margin-top: 20px;">
-            <button onclick="queryBuildings()">Query Buildings</button>
-            <button onclick="downloadBuildings()">Download Buildings</button>
         </div>
     </div>
 
     <script>
         var map = L.map('map').setView([43.0566, -76.1577], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        
+
         var drawnItems = new L.FeatureGroup();
         map.addLayer(drawnItems);
 
-        function getBounds() {
+        function getBoundsShape() {
             var bounds = map.getBounds();
-            return [
-                bounds.getWest(),
-                bounds.getSouth(),
-                bounds.getEast(),
-                bounds.getNorth()
-            ];
+            var nw = bounds.getNorthWest();
+            var ne = bounds.getNorthEast();
+            var se = bounds.getSouthEast();
+            var sw = bounds.getSouthWest();
+
+            return {
+                type: "Polygon",
+                coordinates: [[
+                    [sw.lng, sw.lat],
+                    [nw.lng, nw.lat],
+                    [ne.lng, ne.lat],
+                    [se.lng, se.lat],
+                    [sw.lng, sw.lat]
+                ]]
+            };
         }
 
         function queryBuildings() {
@@ -43,31 +65,43 @@
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    bbox: getBounds()
+                    geometries: [getBoundsShape()]
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                drawnItems.clearLayers();
-                L.geoJSON(data).addTo(drawnItems);
-            });
+                .then(response => response.json())
+                .then(data => {
+                    drawnItems.clearLayers();
+                    L.geoJSON(data).addTo(drawnItems);
+                });
+        }
+
+        function prepareBuildingCache() {
+            if (confirm("This function will download the Bing buildings for the current map view to the server if our server does not have it already. Do you want to continue?")) {
+                downloadBuildings();
+            }
         }
 
         function downloadBuildings() {
+            const geometry = getBoundsShape();
             fetch('/download/buildings', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    bbox: getBounds()
+                    geometries: [geometry]
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                alert('Download completed: ' + JSON.stringify(data.downloaded));
-            });
+                .then(response => {
+                    debugger
+                    return response.json()
+                })
+                .then(data => {
+                    debugger
+                    alert('Download completed: ' + JSON.stringify(data.downloaded));
+                });
         }
     </script>
 </body>
+
 </html>

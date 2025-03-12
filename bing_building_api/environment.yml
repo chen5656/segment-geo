@@ -11,4 +11,5 @@ dependencies:
   - mercantile
   - pyyaml
   - tqdm
+  - aiohttp
   - pip

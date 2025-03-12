@@ -1,9 +1,7 @@
-import os
 from typing import Union
 from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse
 from shapely.geometry import shape, box
-import geopandas as gpd
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from loguru import logger
@@ -36,17 +34,10 @@ def health() -> dict:
 @api_router.post('/query/buildings',
                 response_model=Union[schemas.BuildingResponse, schemas.ErrorResponse],
                 status_code=200)
-async def query_buildings(request: Request):
+async def query_buildings(request: schemas.BatchGeometryRequest):
     try:
-        data = await request.json()
         query_engine = BingBuildingQuery()
-        
-        if 'bbox' in data:
-            geom = box(*data['bbox'])
-        else:
-            geom = shape(data)
-        
-        results = query_engine.query_buildings(geom)
+        results = query_engine.query_buildings(request.geometries)
         return JSONResponse(content=json.loads(results))
     except Exception as e:
         return JSONResponse(
@@ -57,23 +48,18 @@ async def query_buildings(request: Request):
 @api_router.post('/download/buildings',
                 response_model=Union[schemas.DownloadResponse, schemas.ErrorResponse],
                 status_code=200)
-async def download_buildings(request: Request):
-    try:
-        data = request.get_json()
+async def download_building_tiles(request: schemas.BatchGeometryRequest):
+    try:       
         downloader = BingBuildingDownloader()
-        
-        if 'bbox' in data:
-            geom = box(*data['bbox'])
-        else:
-            geom = shape(data)
-        
-        results = downloader.download_buildings(geom)
-        return jsonify({"status": "success", "downloaded": results})
+        print(2)
+        results = await downloader.download_buildings(request.geometries)
+        print(3)
+        return JSONResponse(
+            content={"status": "success", "downloaded": results}
+        )
     except Exception as e:
+        logger.error(f"Error downloading buildings: {e}")
         return JSONResponse(
             status_code=400,
             content={"error": {"message": f"{e}"}}
         )
-
-if __name__ == '__main__':
-    app.run(debug=True)
