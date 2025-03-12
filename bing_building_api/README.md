@@ -9,13 +9,6 @@ This API provides access to query and download Bing Buildings data. It supports 
 - Interactive web demo interface
 - GeoJSON format support
 
-## Requirements
-- Python 3.8+
-- Flask
-- GeoPandas
-- Shapely
-- Other dependencies in requirements.txt
-
 ## Installation
 1. Clone the repository
 2. Install dependencies:
@@ -27,12 +20,13 @@ conda activate bing-building-api
 ## Usage
 1. Start the server:
 ```bash
-conda activate geo_new
+conda activate bing-building-api   
 python -m app.main
 ```
 2. Access the demo interface:
-- Open http://localhost:5000 in your browser
-- Use the map interface to query or download building data
+- Open http://localhost:8001 in your browser
+- Before use, download the Bing Buildings data with the download button on the top left.
+- Use the map interface to query building data
 3. API Endpoints:
 - POST /query/buildings
 - POST /download/buildings
