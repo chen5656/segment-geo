@@ -15,10 +15,29 @@ from typing import List, Dict
 class BingBuildingDownloader:
     def __init__(self):
         self.settings = settings
-        self._ensure_directories()
         self._df = None
         self.force_download = False
         self.semaphore = asyncio.Semaphore(5)  # 限制并发数
+        self._ensure_directories()
+        self._df = None
+        
+    @property
+    def df(self):
+        if self._df is None:
+            self._df = pd.read_csv(
+                "https://minedbuildings.z5.web.core.windows.net/global-buildings/dataset-links.csv", 
+                dtype=str
+            )
+        return self._df
+
+    def _ensure_directories(self):
+        """Ensure required directories exist."""
+        try:
+            os.makedirs(self.settings.data_dir, exist_ok=True)
+            os.makedirs(os.path.join(self.settings.data_dir, self.settings.cache_dir), exist_ok=True)
+        except Exception as e:
+            logger.error(f"Error creating directories: {e}")
+            raise
         
     async def _download_quad(self, quad_key: str) -> str:
         rows = self.df[self.df["QuadKey"] == str(quad_key)]
