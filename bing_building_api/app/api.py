@@ -5,6 +5,7 @@ from shapely.geometry import shape, box
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from loguru import logger
+import json
 
 from app import schemas
 from app.config import settings
@@ -40,6 +41,7 @@ async def query_buildings(request: schemas.BatchGeometryRequest):
         results = query_engine.query_buildings(request.geometries)
         return JSONResponse(content=json.loads(results))
     except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=400,
             content={"error": {"message": str(e)}}
@@ -51,9 +53,7 @@ async def query_buildings(request: schemas.BatchGeometryRequest):
 async def download_building_tiles(request: schemas.BatchGeometryRequest):
     try:       
         downloader = BingBuildingDownloader()
-        print(2)
         results = await downloader.download_buildings(request.geometries)
-        print(3)
         return JSONResponse(
             content={"status": "success", "downloaded": results}
         )

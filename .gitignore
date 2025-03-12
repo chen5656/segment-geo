@@ -118,4 +118,4 @@ venv.bak/
 *.log
 node_modules/
 *.DS_Store
-bing_building_api/data/
+bing_building_api/data/**
