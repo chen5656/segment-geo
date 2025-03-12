@@ -48,7 +48,7 @@ async def query_buildings(request: schemas.BatchGeometryRequest):
 @api_router.post('/download/buildings',
                 response_model=Union[schemas.DownloadResponse, schemas.ErrorResponse],
                 status_code=200)
-async def prepare_buildings(request: schemas.BatchGeometryRequest):
+async def download_building_tiles(request: schemas.BatchGeometryRequest):
     try:       
         downloader = BingBuildingDownloader()
         print(2)
