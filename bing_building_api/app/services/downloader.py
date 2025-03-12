@@ -39,33 +39,30 @@ class BingBuildingDownloader:
             logger.error(f"Error creating directories: {e}")
             raise
         
-    async def _download_quad(self, quad_key: str) -> str:
-        rows = self.df[self.df["QuadKey"] == str(quad_key)]
+    async def _download_each_quad(self, quad_key: str) -> str:
+        quad_key_str = mercantile.quadkey(quad_key)
+        
+        rows = self.df[self.df["QuadKey"] == quad_key_str]
         if rows.shape[0] != 1:
-            raise ValueError(f"No data found for quad_key: {quad_key}")
+            raise ValueError(f"No data found for quad_key: {quad_key_str}")
             
         url = rows.iloc[0]["Url"]
-        json_fn = os.path.join(self.settings.data_dir, self.settings.cache_dir, f"{quad_key}_processed.json")
+        building_json_file_path = os.path.join(self.settings.data_dir, self.settings.cache_dir, f"{quad_key_str}_processed.json")
         
-        if not self.force_download and os.path.exists(json_fn):
-            logger.info(f"Using cached file for {quad_key}: {json_fn}")
-            return json_fn
+        if not self.force_download and os.path.exists(building_json_file_path):
+            logger.info(f"Using cached file for {quad_key}: {building_json_file_path}")
+            return building_json_file_path
             
-        async with self.semaphore:  # 控制并发数
+        async with self.semaphore:
             try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(url) as response:
-                        if response.status != 200:
-                            raise ValueError(f"Failed to download {url}: {response.status}")
-                        data = await response.json(content_type=None)
-                        
-                df2 = pd.DataFrame(data)
+                # read data from url
+                df2 = pd.read_json(url, lines=True)
                 df2["geometry"] = df2["geometry"].apply(shape)
                 gdf = gpd.GeoDataFrame(df2, crs=self.settings.BING_BUILDING_CRS)
-                gdf.to_file(json_fn, driver="GeoJSON")
+                gdf.to_file(building_json_file_path, driver="GeoJSON")
                 
                 logger.info(f"Successfully downloaded {quad_key}")
-                return json_fn
+                return building_json_file_path
                 
             except Exception as e:
                 logger.error(f"Error downloading {quad_key}: {e}")
@@ -74,7 +71,7 @@ class BingBuildingDownloader:
     async def download_buildings(self, geometries: List[Dict]) -> List[Dict]:
         all_quad_keys = set()
         
-        # 收集所有需要下载的 quad_keys
+        # collect quad_keys
         for geometry in geometries:
             try:
                 geo_dict = geometry if isinstance(geometry, dict) else geometry.__dict__
@@ -87,11 +84,10 @@ class BingBuildingDownloader:
 
         logger.info(f"Preparing to download {len(all_quad_keys)} quad keys")
         
-        # 并发下载所有文件
-        tasks = [self._download_quad(quad_key) for quad_key in all_quad_keys]
+        # download 
+        tasks = [self._download_each_quad(quad_key) for quad_key in all_quad_keys]
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
-        # 处理结果
         downloaded = []
         for quad_key, result in zip(all_quad_keys, results):
             if isinstance(result, Exception):
