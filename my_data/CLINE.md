@@ -1,4 +1,3 @@
-# Setting up CLINE with Gemini API
 
 This guide will walk you through setting up CLINE with a Gemini API key from Google, adding CLINE to VS Code, configuring the Gemini key for CLINE, and using chat/plan to help with your coding.
 
@@ -15,6 +14,7 @@ To use CLINE with the Gemini API, you'll need an API key from Google. Here's how
 
 ## 2. Adding CLINE to VS Code
 
+
 CLINE is a VS Code extension. Here's how to add it:
 
 1.  **Open VS Code.**
@@ -27,31 +27,21 @@ CLINE is a VS Code extension. Here's how to add it:
 ## 3. Setting up the Gemini Key for CLINE
 
 Once CLINE is installed, you need to configure it with your Gemini API key:
+1. Open setting
+![[Pasted image 20250407163234.png]]
 
-1.  **Open VS Code settings:** Go to `File > Preferences > Settings` (or press `Ctrl+,`).
-2.  **Search for "cline api key".**  This should bring up the CLINE extension settings.
-3.  **Enter your Gemini API key** into the appropriate setting field (e.g., "Cline: Gemini Api Key").
-4.  **Close the settings tab.** CLINE should now be able to access the Gemini API.
+2.  Set Gemini API key for Plan Mode and Act Mode separately.
+		i. use pro model for plan, and flash model for act. because the requests per minute are different for each model.
+![[Pasted image 20250407163727.png]]
 
 ## 4. Using Chat/Plan to Help Your Coding
 
-CLINE provides two main modes for assisting with your coding: Chat and Plan.
-
-*   **Chat:** Use the Chat mode for quick questions, code snippets, debugging help, and general coding assistance.  You can ask CLINE to explain code, suggest improvements, find errors, or generate code based on your prompts.
+CLINE provides two main modes for assisting with your coding: Plan and Act.
 *   **Plan:** Use the Plan mode for more complex tasks, such as designing a new feature, refactoring existing code, or understanding a large codebase.  In Plan mode, CLINE will work with you to create a detailed plan, breaking down the task into smaller, manageable steps.  You can then execute the plan step-by-step, using CLINE to assist with each step.
+* ** Act:** Use the Act mode for quick questions, code snippets, debugging help, and general coding assistance.  You can ask CLINE to explain code, suggest improvements, fix a bug, or apply code changes.
 
 **Example Usage:**
 
-*   **Chat:** "How do I reverse a string in JavaScript?"
-*   **Chat:** "Explain this Python code: `def my_function(x): return x + 1`"
-*   **Plan:** "Refactor this class to use dependency injection."
-*   **Plan:** "Create a new API endpoint that returns a list of users."
+![[Pasted image 20250407164609.png]]
 
-**Tips for Effective Prompts:**
 
-*   Be clear and specific in your requests.
-*   Provide context when necessary.
-*   Use code examples to illustrate your points.
-*   Ask follow-up questions to clarify the results.
-
-By following these steps, you can set up CLINE with the Gemini API and start using it to enhance your coding workflow.
