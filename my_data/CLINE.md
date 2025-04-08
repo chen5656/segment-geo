@@ -28,11 +28,12 @@ CLINE is a VS Code extension. Here's how to add it:
 
 Once CLINE is installed, you need to configure it with your Gemini API key:
 1. Open setting
-![[Pasted image 20250407163234.png]]
+   ![Settings Screenshot](20250407163234.png)
 
 2.  Set Gemini API key for Plan Mode and Act Mode separately.
 		i. use pro model for plan, and flash model for act. because the requests per minute are different for each model.
-![[Pasted image 20250407163727.png]]
+
+   ![Gemini Key Configuration](20250407163727.png)
 
 ## 4. Using Chat/Plan to Help Your Coding
 
@@ -42,6 +43,4 @@ CLINE provides two main modes for assisting with your coding: Plan and Act.
 
 **Example Usage:**
 
-![[Pasted image 20250407164609.png]]
-
-
+![Example Usage Screenshot](20250407164609.png)
