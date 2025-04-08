@@ -32,7 +32,7 @@ Once CLINE is installed, you need to configure it with your Gemini API key:
    ![Settings Screenshot](20250407163234.png)
 
 3.  Set Gemini API key for Plan Mode and Act Mode separately.
-		i. use pro model for plan, and flash model for act. because the requests per minute are different for each model.
+- use pro model for plan, and flash model for act. because the requests per minute are different for each model.
 
    ![Gemini Key Configuration](20250407163727.png)
 
